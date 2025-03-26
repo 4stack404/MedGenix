@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "semiotic-abbey-454605-m6",
+  "private_key_id": "7ed8cd02208443024927c4c9249c5064bc6d79d1",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCuz5H+9GBwOmzz\nxR/guEDf4G3AaZ8Nh2MSy0eRJbvIMgUhfWjtZ51e/bSJODRu3TeF9/3CklVzksNb\nTmlI8XRvA9c+RYXGjZf8uXYuOkma//sDbID7ykjzkhSZZPlGFxjH1v44MG4CAt44\n0MO4DpSlVGzdrLpZ2OWlV73DGutnFKIK4Q/9gUo1lz8CDcSnB509cOCAe0o6X/X2\nFa/mEJKBJ+SaEae/Db051blXmlmL4vWxIpYzEtqRUUUuoPIBcF/NdaK8Q/cx38tQ\n49jZcDgmb4llnLYYhxx7RLr9Tjz7iUzzlmH6V762EbBT8uqGQEz4ndNYeASAmrcm\nP6ZOMwT5AgMBAAECggEAIo4/ovF12tmBzhJKgeaKVHcN2vpGCauYpw9t/0BBRYq1\nvvAGfN99mVh3hqSIoN2z6xShogPBRo5ddcAjSdsJFCTjOJkPn7c/syKKPQsin7Q4\nT230dVGAaD2ZOtVd/T/1kxNpv3u7U0Rz3zFNbyXatm/g8VUCpV4dzzhv95Brtj1n\nLlN9S9HX4fZRgrVbY82dfQ82v9cecDHovjzIGEvwC53cuwI7jDZYgn5epJ1SpILp\nDGYPXMO4mMooo0NJVHoFUW2Gg/JaPu/sF26NkBgG+d8V4LGzITBsJj1X5lg7+81C\nAEFDlsmRHCengCD905RqC16ERt+Efx++MnHwdcuNTQKBgQDdTaHXWKbnydreXNNQ\nhneH1sSVxhP8XPbfWEfHCPWVcjbwwUSVo0+onIKYviHxPGqPOMU5O78eVtFKn9fR\nvf+jApUXD+L0jLloSpNuNNmj7/nDqx30Nbo+CcslasJE94K2mcYPkGw1irBbS7uG\nzDUPm0uV4TkxsFdiA3xPIC+NYwKBgQDKN+NwsvCP1bVkhJskDbsTv2J9S3MipFq+\nSHyqsehqAgoPwGW2Eu5rtAMsPSYjd6cVcfXIQB+3ysIHxPOFUwtefEq4lIK34nbP\n9V3QfyFHKvA29jNanmC2PKUTKG3Y1SYHzoPpDHLmEe7de+zkfvlxVuhehIxlkEr5\nPqmYHmHw8wKBgHaqmCvnJ6iGvswZrl4xnIrEiSley3y5RM/CgMqjbTyzv+4dVG+A\n4MgjFIxe98hpgyJFaMwl03erShLf31Ris19vlQ6GwEYt54Wa569iu4mCtsVLToaT\nAMkfa0UnGADvT7ImhuP1p3CWa7aox2eivJkfxsoZuReB3Xl7MP8k3RrNAoGBALrz\ncn0loYuIqxuUEQ4C97qpDHgDwhz7z7ztrPvuYI1o9z5axG3REMVX9jr3CYRuwXTt\nF6qbxfcYJ8whBHZ1MSSYSkhdXIB+iRN3p9TzQ6PVCaH2ecHEfGrepEqS7QMzA+bh\nwUg6rxsO50Oyp28UCK8FBu0jI91dykKl8Qrmw+uLAoGBAL98ECVBE7GO16iJUFuL\nQ05eAYX7uUqx7Ry1kHcQBYhp1VJ+QL/J3fH0IK+nu0fVTA09XEEWFaMKk7b6qp93\nmftWfl/4hix0vAk1/i6jpiPmOjmkVyJX/65z14wE/KmyPShRw60C4iApgeZP4GcT\nndHdi8fLEV3rWZnBaKiifRJX\n-----END PRIVATE KEY-----\n",
+  "client_email": "saish-46@semiotic-abbey-454605-m6.iam.gserviceaccount.com",
+  "client_id": "114288008665024465171",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/saish-46%40semiotic-abbey-454605-m6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

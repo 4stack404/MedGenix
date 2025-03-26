@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="MedGenix - Where Health Meets Affordability. Scan your prescription and save up to 70% on your medicines." />
+    <meta name="keywords" content="medicine, prescription, generic alternatives, healthcare, cost savings" />
+    <title>MedGenix - Save on Medications</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Translate Script -->
+    <script type="text/javascript">
+      // Flag to track initialization
+      window.googleTranslateInitialized = false;
+      
+      // Store original React createElement to patch it later
+      if (window.React) {
+        window.originalCreateElement = window.React.createElement;
+      }
+      
+      function googleTranslateElementInit() {
+        // Create the translate element
+        new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'en,hi,bn,mr,te,ta,gu,kn,or,ml,pa',
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+        }, 'google_translate_element');
+        
+        // Mark as initialized
+        window.googleTranslateInitialized = true;
+        
+        // Store a reference to the Google Translate object
+        window.googleTranslateObject = google.translate;
+        
+        // Trigger event for components to know translation is ready
+        window.dispatchEvent(new Event('google-translate-initialized'));
+        
+        // Add notranslate class to logo elements and MUI components
+        const addNotTranslateClass = () => {
+          // Protect logos
+          const logoElements = document.querySelectorAll('.logo, .brand, .letter');
+          logoElements.forEach(el => {
+            if (!el.classList.contains('notranslate')) {
+              el.classList.add('notranslate');
+            }
+          });
+          
+          // Protect MUI components that might cause issues
+          const muiElements = document.querySelectorAll('.MuiButtonBase-root, .MuiSvgIcon-root, .MuiButton-startIcon, .MuiButton-endIcon');
+          muiElements.forEach(el => {
+            if (!el.classList.contains('notranslate')) {
+              el.classList.add('notranslate');
+            }
+          });
+        };
+        
+        // Run immediately and set interval
+        addNotTranslateClass();
+        setInterval(addNotTranslateClass, 1000);
+        
+        // Fix body style that Google Translate adds
+        if (document.body.style.top && document.body.style.top !== '0px') {
+          document.body.style.top = '0px';
+        }
+        
+        // Hide Google translate bar if it appears
+        const googleBar = document.querySelector('.goog-te-banner-frame');
+        if (googleBar) {
+          googleBar.style.display = 'none';
+        }
+      }
+      
+      // Function to change language programmatically
+      window.changeGoogleTranslateLanguage = function(langCode) {
+        try {
+          // Wait for initialization if needed
+          if (!window.googleTranslateInitialized) {
+            console.log('Waiting for Google Translate to initialize...');
+            setTimeout(function() {
+              window.changeGoogleTranslateLanguage(langCode);
+            }, 500);
+            return;
+          }
+          
+          console.log('Attempting to change language to:', langCode);
+          
+          // For English, use the direct API to restore original
+          if (langCode === 'en') {
+            // Try using the cookie method
+            document.cookie = 'googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = 'googtrans=; path=/; domain=' + window.location.hostname + '; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = 'googtrans=/en/en; path=/; domain=' + window.location.hostname;
+            document.cookie = 'googtrans=/en/en; path=/;';
+            console.log('Set cookies to restore English');
+            
+            // Last resort - reload the page
+            console.log('Reloading page to restore English');
+            window.location.reload();
+          } else {
+            // For other languages, use direct cookie manipulation
+            // This is a reliable method that doesn't depend on finding UI elements
+            
+            // First clear any existing cookie
+            document.cookie = 'googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = 'googtrans=; path=/; domain=' + window.location.hostname + '; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            
+            // Set the new language cookie
+            document.cookie = 'googtrans=/en/' + langCode + '; path=/; domain=' + window.location.hostname;
+            document.cookie = 'googtrans=/en/' + langCode + '; path=/;';
+            
+            console.log('Set cookies for language:', langCode);
+            
+            // Reload the page to apply the new language
+            // This is the most reliable method but causes a page reload
+            window.location.reload();
+          }
+        } catch(e) {
+          console.error('Error changing language:', e);
+        }
+      }
+      
+      // Add a MutationObserver to protect React components after DOM changes
+      document.addEventListener('DOMContentLoaded', function() {
+        // Create a MutationObserver to watch for DOM changes
+        const observer = new MutationObserver(function(mutations) {
+          // Fix body style
+          if (document.body.style.top && document.body.style.top !== '0px') {
+            document.body.style.top = '0px';
+          }
+          
+          // Hide Google translate bars
+          const googleBar = document.querySelector('.goog-te-banner-frame');
+          if (googleBar) {
+            googleBar.style.display = 'none';
+          }
+          
+          // Protect MUI components
+          const muiElements = document.querySelectorAll('.MuiButtonBase-root, .MuiSvgIcon-root, .MuiButton-startIcon, .MuiButton-endIcon');
+          muiElements.forEach(el => {
+            if (!el.classList.contains('notranslate')) {
+              el.classList.add('notranslate');
+            }
+          });
+        });
+        
+        // Start observing
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true
+        });
+      });
+    </script>
+    
+    <!-- Hide Google Translate elements -->
+    <style>
+      .goog-te-banner-frame, .skiptranslate {
+        display: none !important;
+      }
+      body {
+        top: 0 !important;
+      }
+      .goog-te-gadget {
+        font-size: 0 !important;
+      }
+      .goog-te-gadget img {
+        display: none !important;
+      }
+      .goog-logo-link {
+        display: none !important;
+      }
+      /* Prevent logo from being translated */
+      .notranslate {
+        white-space: nowrap !important;
+      }
+      /* Hide Google translate element */
+      #google_translate_element {
+        position: absolute;
+        visibility: hidden;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
+      
+      /* Prevent MUI components from being affected by translation */
+      .MuiButtonBase-root, 
+      .MuiSvgIcon-root, 
+      .MuiButton-startIcon, 
+      .MuiButton-endIcon {
+        white-space: nowrap !important;
+      }
+      
+      /* Ensure navbar has sufficient spacing */
+      .MuiAppBar-root .MuiToolbar-root {
+        flex-wrap: wrap !important;
+      }
+      
+      /* Add minimum width to navbar items to prevent squishing */
+      .MuiButton-root {
+        min-width: fit-content !important;
+        margin: 4px !important;
+      }
+      
+      /* Ensure text doesn't overflow */
+      .MuiTypography-root {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="google_translate_element"></div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Load Google Translate script after page has loaded -->
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  </body>
+</html>

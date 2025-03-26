@@ -1,0 +1,25 @@
+/* Hide Google translate top bar that appears after translation */
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+/* Reset body position (Google translate adds a "top" value) */
+body {
+  top: 0 !important;
+}
+
+/* Fix for text highlighting during translation */
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Fix for menu dropdown appearance */
+.goog-te-menu-value {
+  text-decoration: none !important;
+}
+
+/* Hide the powered by Google in footer */
+.goog-logo-link {
+  display: none !important;
+} 
