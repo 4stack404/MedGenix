@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
 import {
   Box,
@@ -26,18 +24,9 @@ import {
   Grid,
   Divider,
   CircularProgress,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  CardActions,
-  Badge,
-  useTheme,
-  SvgIcon
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import {
   CalendarMonth,
   Medication,
@@ -46,31 +35,11 @@ import {
   Edit,
   Add,
   InfoOutlined,
-  ContentPaste,
-  Person,
-  DocumentScanner,
-  LocalPharmacy,
-  PictureAsPdf,
-  Share,
-  KeyboardArrowRight,
-  Search,
-  FileCopy,
-  Money,
-  TrendingUp,
-  Notifications,
-  Storage,
-  NotificationsActive,
-  MoreVert,
-  Close,
-  ArrowForward,
-  Apartment,
-  TimerOutlined,
-  ChangeCircle,
-  SavingsOutlined,
-  Receipt
 } from '@mui/icons-material';
 import axios from 'axios';
 import { formatDate } from '../utils/dateUtils';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 
 // Additional styles for medicine card flip effect
 import { createGlobalStyle } from 'styled-components';
@@ -141,15 +110,15 @@ const StyledAvatar = styled(Avatar)(() => ({
 }));
 
 const StyledIconAvatar = styled(Avatar)(({ theme }) => ({
-  backgroundColor: 'rgba(103, 194, 124, 0.15)',
-  color: '#008080',
+  backgroundColor: 'rgba(0, 128, 128, 0.1)',
+  color: theme.palette.primary.main,
   width: 50,
   height: 50,
   boxShadow: '0 4px 10px rgba(0, 0, 0, 0.08)',
 }));
 
 const VisibilityIconButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: 'rgba(103, 194, 124, 0.1)',
+  backgroundColor: 'rgba(0, 128, 128, 0.1)',
   '&:hover': {
     backgroundColor: 'rgba(0, 128, 128, 0.2)',
   },
@@ -208,42 +177,15 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  
-  // Add missing state variables
-  const [totalSavings, setTotalSavings] = useState(1250);
-  const [totalPrescriptions, setTotalPrescriptions] = useState(0);
-  const [totalMedicines, setTotalMedicines] = useState(0);
-  const [savingsData, setSavingsData] = useState([
-    { month: 'Jan', savings: 200 },
-    { month: 'Feb', savings: 300 },
-    { month: 'Mar', savings: 250 },
-    { month: 'Apr', savings: 380 },
-    { month: 'May', savings: 400 },
-    { month: 'Jun', savings: 500 },
-    { month: 'Jul', savings: 450 },
-    { month: 'Aug', savings: 480 },
-    { month: 'Sep', savings: 600 },
-    { month: 'Oct', savings: 750 },
-    { month: 'Nov', savings: 800 },
-    { month: 'Dec', savings: 1250 }
-  ]);
 
   useEffect(() => {
     const fetchPrescriptions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/prescriptions/user`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/prescriptions/user`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setPrescriptions(response.data);
-        setTotalPrescriptions(response.data.length);
-        
-        // Calculate total medicines from prescriptions
-        let medicineCount = 0;
-        response.data.forEach(prescription => {
-          medicineCount += prescription.medicines?.length || 0;
-        });
-        setTotalMedicines(medicineCount);
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
       } finally {
@@ -286,24 +228,10 @@ const DashboardPage = () => {
         sx={{
           flex: 1,
           py: { xs: 4, md: 5 },
-          px: { xs: 2, sm: 3, md: 4 },
-          position: 'relative',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '100%',
-            backgroundImage: 'url(https://plus.unsplash.com/premium_photo-1664476984010-46bb839845f3?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fG1lZGljYWwlMjBlcXVpcG1lbnR8ZW58MHx8MHx8fDA%3D)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.3,
-            zIndex: 0,
-          }
+          px: { xs: 2, sm: 3, md: 4 }
         }}
       >
-        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+        <Container maxWidth="xl">
           {/* Welcome Section - Personalized Greeting & Profile Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -328,7 +256,11 @@ const DashboardPage = () => {
                     sx={{ 
                       fontWeight: 700,
                       mb: 1,
-                      color: '#008080',
+                      background: 'linear-gradient(90deg, #006666 0%, #008080 50%, #00a0a0 100%)',
+                      backgroundClip: 'text',
+                      textFillColor: 'transparent',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
                       display: 'inline-block',
                     }}
                     component={motion.h1}
@@ -340,7 +272,7 @@ const DashboardPage = () => {
                   </Typography>
                   <Typography 
                     variant="body1" 
-                    color="#333333"
+                    color="text.secondary"
                     component={motion.p}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -358,7 +290,7 @@ const DashboardPage = () => {
                         left: 0,
                         width: '40px',
                         height: '3px',
-                        backgroundColor: '#67c27c',
+                        backgroundColor: 'primary.main',
                         borderRadius: '2px',
                       }
                     }}
@@ -380,21 +312,8 @@ const DashboardPage = () => {
                     <ActionButton
                       variant="contained"
                       color="primary"
+                      startIcon={<Add />}
                       onClick={handleScanPrescription}
-                      sx={{ 
-                        mr: 2,
-                        px: 3,
-                        py: 1.2,
-                        backgroundColor: '#008080',
-                        color: 'white',
-                        boxShadow: '0 4px 12px rgba(0, 128, 128, 0.3)',
-                        '&:hover': {
-                          backgroundColor: '#67c27c',
-                          boxShadow: '0 6px 16px rgba(103, 194, 124, 0.4)',
-                          transform: 'translateY(-2px)',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
                     >
                       Scan New Prescription
                     </ActionButton>
@@ -425,7 +344,7 @@ const DashboardPage = () => {
                       right: 0,
                       height: '100%',
                       opacity: 0.05,
-                      background: 'radial-gradient(circle at 30% 30%, rgba(103, 194, 124, 0.4) 0%, rgba(0, 128, 128, 0) 70%)',
+                      background: 'radial-gradient(circle at 30% 30%, rgba(0, 128, 128, 0.4) 0%, rgba(0, 128, 128, 0) 70%)',
                       zIndex: 0,
                     }}
                     component={motion.div}
@@ -497,308 +416,6 @@ const DashboardPage = () => {
                     </Button>
                   </Box>
                 </StyledPaper>
-              </Grid>
-            </Grid>
-          </motion.div>
-          
-          {/* Overview Section - Key Stats & Savings Graph */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Typography 
-              variant="h5" 
-              component="h2" 
-              sx={{ 
-                mb: 3, 
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center', 
-              }}
-            >
-              Overview
-              <Tooltip title="View detailed statistics for the last 6 months">
-                <IconButton size="small" sx={{ ml: 1 }}>
-                  <InfoOutlined fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Typography>
-            
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {/* Total Savings Card */}
-              <Grid item xs={12} sm={6} lg={4}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                >
-                  <StyledStatCard>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <StyledIconAvatar
-                        sx={{ 
-                          bgcolor: 'rgba(0, 128, 128, 0.1)',
-                          color: 'primary.main'
-                        }}
-                      >
-                        <SavingsOutlined />
-                      </StyledIconAvatar>
-                      <Box sx={{ ml: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Total Savings
-                        </Typography>
-                        <Typography 
-                          variant="h4" 
-                          component="div" 
-                          sx={{ 
-                            fontWeight: 700,
-                            color: '#008080',
-                          }}
-                        >
-                          ₹{totalSavings}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    <Box 
-                      sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        mt: 'auto', 
-                        pt: 1,
-                        borderTop: '1px dashed rgba(0, 0, 0, 0.1)',
-                      }}
-                    >
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          bgcolor: 'rgba(0, 200, 83, 0.1)',
-                          color: 'success.main',
-                          px: 1,
-                          py: 0.5,
-                          borderRadius: 1,
-                        }}
-                      >
-                        <ArrowForward fontSize="small" sx={{ mr: 0.5, fontSize: '1rem' }} />
-                        <Typography variant="body2" fontWeight={500}>
-                          15.3%
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        from last month
-                      </Typography>
-                    </Box>
-                  </StyledStatCard>
-                </motion.div>
-              </Grid>
-              
-              {/* Total Prescriptions Card */}
-              <Grid item xs={12} sm={6} lg={4}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                >
-                  <StyledStatCard>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <StyledIconAvatar>
-                        <Receipt />
-                      </StyledIconAvatar>
-                      <Box sx={{ ml: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Total Prescriptions
-                        </Typography>
-                        <Typography 
-                          variant="h4" 
-                          component="div" 
-                          sx={{ 
-                            fontWeight: 700,
-                            color: '#008080',
-                          }}
-                        >
-                          {totalPrescriptions}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    <Box 
-                      sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        mt: 'auto', 
-                        pt: 1,
-                        borderTop: '1px dashed rgba(0, 0, 0, 0.1)',
-                      }}
-                    >
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          bgcolor: 'rgba(0, 200, 83, 0.1)',
-                          color: 'success.main',
-                          px: 1,
-                          py: 0.5,
-                          borderRadius: 1,
-                        }}
-                      >
-                        <ArrowForward fontSize="small" sx={{ mr: 0.5, fontSize: '1rem' }} />
-                        <Typography variant="body2" fontWeight={500}>
-                          3 New
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        in last 30 days
-                      </Typography>
-                    </Box>
-                  </StyledStatCard>
-                </motion.div>
-              </Grid>
-              
-              {/* Total Medicines Card */}
-              <Grid item xs={12} sm={6} lg={4}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                >
-                  <StyledStatCard>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <StyledIconAvatar>
-                        <Medication />
-                      </StyledIconAvatar>
-                      <Box sx={{ ml: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Total Medicines Extracted
-                        </Typography>
-                        <Typography 
-                          variant="h4" 
-                          component="div" 
-                          sx={{ 
-                            fontWeight: 700,
-                            color: '#008080',
-                          }}
-                        >
-                          {totalMedicines}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    <Box 
-                      sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        mt: 'auto', 
-                        pt: 1,
-                        borderTop: '1px dashed rgba(0, 0, 0, 0.1)',
-                      }}
-                    >
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          bgcolor: 'rgba(0, 200, 83, 0.1)',
-                          color: 'success.main',
-                          px: 1,
-                          py: 0.5,
-                          borderRadius: 1,
-                        }}
-                      >
-                        <ArrowForward fontSize="small" sx={{ mr: 0.5, fontSize: '1rem' }} />
-                        <Typography variant="body2" fontWeight={500}>
-                          6 New
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        in last 30 days
-                      </Typography>
-                    </Box>
-                  </StyledStatCard>
-                </motion.div>
-              </Grid>
-              
-              {/* Savings Chart Card */}
-              <Grid item xs={12}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 }}
-                >
-                  <StyledPaper 
-                    sx={{ 
-                      p: 3, 
-                      height: '100%',
-                      minHeight: '320px',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                      <Typography variant="h6" component="h3" fontWeight={600}>
-                        Monthly Savings
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                          This Year
-                        </Typography>
-                        <IconButton size="small">
-                          <MoreVert fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                    
-                    {/* Height set to ensure proper rendering */}
-                    <Box sx={{ width: '100%', height: 300 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart
-                          data={savingsData}
-                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                        >
-                          <defs>
-                            <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#67c27c" stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor="#008080" stopOpacity={0.1}/>
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                          <XAxis 
-                            dataKey="month" 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 12, fill: '#666' }}
-                          />
-                          <YAxis 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 12, fill: '#666' }}
-                            tickFormatter={(value) => `₹${value}`}
-                          />
-                          <RechartsTooltip 
-                            formatter={(value) => [`₹${value}`, 'Savings']}
-                            contentStyle={{ 
-                              backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                              borderRadius: '8px',
-                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                              border: 'none',
-                            }}
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="savings" 
-                            stroke="#008080" 
-                            strokeWidth={2}
-                            fillOpacity={1} 
-                            fill="url(#colorSavings)" 
-                            activeDot={{ r: 6, stroke: '#008080', strokeWidth: 2, fill: 'white' }}
-                            animationDuration={1500}
-                            animationEasing="ease-in-out"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </Box>
-                  </StyledPaper>
-                </motion.div>
               </Grid>
             </Grid>
           </motion.div>

@@ -58,7 +58,7 @@ const EmailVerifyPage = () => {
   useEffect(() => {
     if (!user) {
       navigate('/login');
-    } else if (user.isEmailVerified) {
+    } else if (user.isAccountVerified) {
       navigate('/dashboard');
     }
   }, [user, navigate]);
@@ -168,7 +168,7 @@ const EmailVerifyPage = () => {
                     color: 'primary.dark',
                   }}
                 >
-                  Verify Your Email
+                  Verify Your Account
                 </Typography>
                 <Typography
                   variant="body1"
@@ -233,11 +233,9 @@ const EmailVerifyPage = () => {
           </motion.div>
         </Container>
       </Box>
-      <Box sx={{ background: 'rgba(255, 255, 255, 0.9)' }}>
-        <Footer />
-      </Box>
+      <Footer />
     </Box>
   );
 };
 
-export default EmailVerifyPage;
+export default EmailVerifyPage; 
