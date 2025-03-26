@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Client } from '@googlemaps/google-maps-services-js';
 
 // For __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -13,6 +14,7 @@ dotenv.config();
 
 // Get the Google Maps API key from environment variables
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
 // Setup logging
 const setupLogging = () => {
@@ -36,16 +38,34 @@ const logToFile = (message) => {
   });
 };
 
+const client = new Client({});
+
+// Keywords that might indicate a generic pharmacy
+const GENERIC_KEYWORDS = [
+  'generic', 'affordable', 'discount', 'low cost', 'budget', 
+  'cheap', 'inexpensive', 'economical', 'reasonable',
+  'wholesale', 'bulk', 'public', 'government', 'subsidized'
+];
+
+// Function to check if a pharmacy is likely to be generic
+const isGenericPharmacy = (pharmacy) => {
+  if (!pharmacy) return false;
+  
+  const nameAndVicinity = `${pharmacy.name} ${pharmacy.vicinity || ''} ${pharmacy.types?.join(' ') || ''}`.toLowerCase();
+  
+  return GENERIC_KEYWORDS.some(keyword => nameAndVicinity.includes(keyword.toLowerCase())) ||
+         (pharmacy.rating && pharmacy.rating < 3.5) ||
+         (pharmacy.types && pharmacy.types.includes('health'));
+};
+
 /**
  * Controller to get nearby pharmacies using Google Places API
  */
 export const getNearbyPharmacies = async (req, res) => {
   try {
-    const { lat, lng, radius, type } = req.query;
+    const { lat, lng, radius = 5000 } = req.query;
     
     logToFile(`Pharmacy API request received - lat: ${lat}, lng: ${lng}`);
-    logToFile(`Environment variables loaded: NODE_ENV=${process.env.NODE_ENV}`);
-    logToFile(`Google Maps API Key available: ${GOOGLE_MAPS_API_KEY ? 'Yes' : 'No'}`);
     
     if (!lat || !lng) {
       logToFile('Missing required parameters: lat, lng');
@@ -54,181 +74,109 @@ export const getNearbyPharmacies = async (req, res) => {
         message: 'Latitude and longitude are required' 
       });
     }
-    
-    // Check if API key is available
-    if (!GOOGLE_MAPS_API_KEY) {
-      logToFile('Google Maps API key is not defined in environment variables');
-      
-      // Fall back to simulated data
-      logToFile('Falling back to simulated pharmacy data due to missing API key');
-      const simulatedPharmacies = generateSimulatedPharmacies(parseFloat(lat), parseFloat(lng));
-      
-      return res.json({
-        success: true,
-        pharmacies: simulatedPharmacies,
-        note: 'Using simulated data due to API configuration issues'
+
+    // Use Google Places API key for places search
+    if (!GOOGLE_PLACES_API_KEY) {
+      logToFile('Google Places API key is not defined in environment variables');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error'
       });
     }
     
-    logToFile(`Using coordinates: lat=${lat}, lng=${lng}`);
-    logToFile(`API Key (first 10 chars): ${GOOGLE_MAPS_API_KEY.substring(0, 10)}...`);
-    
     try {
-      // Construct the URL for debugging
       const url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
       const params = {
         location: `${lat},${lng}`,
-        radius: radius || 5000,
-        type: type || 'pharmacy',
-        keyword: 'pharmacy medicine medical drugs generic',
-        key: GOOGLE_MAPS_API_KEY
+        radius: radius,
+        type: 'pharmacy',
+        keyword: 'pharmacy',
+        key: GOOGLE_PLACES_API_KEY
       };
       
-      logToFile(`Making API request to: ${url}`);
-      logToFile(`With params: ${JSON.stringify({
-        ...params,
-        key: params.key.substring(0, 10) + '...' // Mask most of the key for security
-      })}`);
+      logToFile(`Making API request to Places API with params: ${JSON.stringify({...params, key: '***'})}`);
       
-      // Call Google Places API to find nearby pharmacies
       const response = await axios.get(url, {
         params,
-        timeout: 15000 // 15 second timeout
+        timeout: 15000,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
       
-      logToFile(`API Response status: ${response.status}`);
-      logToFile(`Google Places API status: ${response.data.status}`);
+      logToFile(`Places API Response: ${JSON.stringify(response.data)}`);
       
       const { results, status, error_message } = response.data;
       
-      // Log the raw response for debugging
-      if (status !== 'OK') {
-        logToFile(`API Error Response: ${JSON.stringify(response.data)}`);
-      } else {
-        logToFile(`API returned ${results.length} results`);
-      }
-      
-      if (status !== 'OK') {
-        logToFile(`Google Places API returned status: ${status}`);
-        logToFile(`Error message: ${error_message || 'No specific error message provided'}`);
-        
-        // If the API key is invalid or unauthorized
-        if (status === 'REQUEST_DENIED' || status === 'INVALID_REQUEST') {
-          // Fall back to simulated data for development
-          logToFile('Falling back to simulated pharmacy data due to API key issues');
-          
-          // Generate simulated data based on the provided coordinates
-          const simulatedPharmacies = generateSimulatedPharmacies(parseFloat(lat), parseFloat(lng));
-          
-          return res.json({
-            success: true,
-            pharmacies: simulatedPharmacies,
-            note: 'Using simulated data due to API key issues: ' + error_message
-          });
-        }
-        
-        // Handle zero results case
-        if (status === 'ZERO_RESULTS') {
-          logToFile('API returned ZERO_RESULTS');
-          return res.json({
-            success: true,
-            pharmacies: [],
-            message: 'No pharmacies found in this area'
-          });
-        }
-        
-        return res.status(500).json({ 
-          success: false, 
-          message: `Google Places API error: ${status}`,
-          details: error_message || 'No details available'
+      if (status === 'REQUEST_DENIED') {
+        logToFile(`Places API request denied: ${error_message}`);
+        // Return simulated data for development
+        const simulatedData = generateSimulatedPharmacies(parseFloat(lat), parseFloat(lng));
+        return res.json({
+          success: true,
+          pharmacies: simulatedData,
+          message: 'Using simulated data due to API configuration'
         });
       }
       
-      logToFile(`Found ${results.length} real pharmacies from Google API`);
+      if (status !== 'OK' && status !== 'ZERO_RESULTS') {
+        logToFile(`Google Places API error: ${status} - ${error_message || 'No error message'}`);
+        throw new Error(`Google Places API error: ${status}`);
+      }
       
-      // Identify which pharmacies are likely generic
-      const processedResults = results.map(pharmacy => {
-        const isGeneric = identifyGenericPharmacy(pharmacy);
-        return {
-          ...pharmacy,
-          isGeneric
-        };
-      });
+      if (status === 'ZERO_RESULTS' || !results?.length) {
+        logToFile('No pharmacies found in the area');
+        return res.json({
+          success: true,
+          pharmacies: [],
+          message: 'No pharmacies found in this area'
+        });
+      }
       
-      // Log generic pharmacies
-      const genericPharmacies = processedResults.filter(p => p.isGeneric);
-      logToFile(`Found ${genericPharmacies.length} potential generic pharmacies:`);
-      genericPharmacies.forEach(pharmacy => {
-        logToFile(`- ${pharmacy.name} (${pharmacy.vicinity})`);
-      });
+      // Process and enhance the results
+      const processedResults = results.map(pharmacy => ({
+        ...pharmacy,
+        isGeneric: isGenericPharmacy(pharmacy),
+        geometry: {
+          ...pharmacy.geometry,
+          location: {
+            lat: pharmacy.geometry.location.lat,
+            lng: pharmacy.geometry.location.lng
+          }
+        }
+      }));
       
-      // Return the results
+      logToFile(`Found ${processedResults.length} pharmacies`);
+      
       return res.json({
         success: true,
         pharmacies: processedResults
       });
+      
     } catch (apiError) {
-      logToFile(`Error calling Google Places API: ${apiError.message}`);
+      logToFile(`Places API Error: ${apiError.message}`);
       if (apiError.response) {
-        logToFile(`API Error Response data: ${JSON.stringify(apiError.response.data)}`);
-        logToFile(`API Error Response status: ${apiError.response.status}`);
+        logToFile(`API Error Response: ${JSON.stringify(apiError.response.data)}`);
       }
       
-      // Fall back to simulated data for any API call errors
-      logToFile('API call failed, falling back to simulated pharmacy data');
-      const simulatedPharmacies = generateSimulatedPharmacies(parseFloat(lat), parseFloat(lng));
-      
+      // Return simulated data as fallback
+      const simulatedData = generateSimulatedPharmacies(parseFloat(lat), parseFloat(lng));
       return res.json({
         success: true,
-        pharmacies: simulatedPharmacies,
-        note: 'Using simulated data due to API connectivity issues: ' + apiError.message
+        pharmacies: simulatedData,
+        message: 'Using simulated data due to API error'
       });
     }
   } catch (error) {
-    logToFile(`Error fetching nearby pharmacies: ${error.message}`);
-    
-    // Always return a valid response even on server error
-    try {
-      const simulatedPharmacies = generateSimulatedPharmacies(
-        parseFloat(req.query.lat || 0), 
-        parseFloat(req.query.lng || 0)
-      );
-      
-      return res.json({
-        success: true,
-        pharmacies: simulatedPharmacies,
-        note: 'Using simulated data due to server error: ' + error.message
-      });
-    } catch (fallbackError) {
-      // If even the fallback fails, return an error
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error fetching nearby pharmacies',
-        details: error.message 
-      });
-    }
+    logToFile(`Server Error: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch nearby pharmacies',
+      error: error.message
+    });
   }
 };
-
-/**
- * Helper function to identify generic pharmacies
- */
-function identifyGenericPharmacy(pharmacy) {
-  // Keywords that might indicate a generic pharmacy
-  const GENERIC_KEYWORDS = [
-    'generic', 'affordable', 'discount', 'low cost', 'budget', 
-    'cheap', 'inexpensive', 'economical', 'reasonable',
-    'wholesale', 'bulk', 'public', 'government', 'subsidized',
-    'apollo', 'jan aushadhi', 'janaushadhi', 'medplus'
-  ];
-  
-  // Check if the pharmacy name or vicinity contains any generic keywords
-  const nameAndVicinity = (
-    (pharmacy.name || '') + ' ' + (pharmacy.vicinity || '')
-  ).toLowerCase();
-  
-  return GENERIC_KEYWORDS.some(keyword => nameAndVicinity.includes(keyword));
-}
 
 /**
  * Controller to get details about a specific pharmacy
@@ -246,85 +194,39 @@ export const getPharmacyDetails = async (req, res) => {
     
     // Check if API key is available
     if (!GOOGLE_MAPS_API_KEY) {
-      console.error('Google Maps API key is not defined in environment variables');
-      return res.status(500).json({
-        success: false,
-        message: 'API configuration error: Missing API key'
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Google Maps API key is not configured' 
       });
     }
-    
+
     try {
-      // Call Google Places API to get details about the pharmacy
-      const response = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
+      const response = await client.placeDetails({
         params: {
           place_id: placeId,
-          fields: 'name,formatted_address,formatted_phone_number,website,opening_hours,photos,rating,user_ratings_total,types',
-          key: GOOGLE_MAPS_API_KEY
+          key: GOOGLE_MAPS_API_KEY,
+          fields: ['name', 'formatted_address', 'formatted_phone_number', 'opening_hours', 'rating', 'reviews', 'website', 'photos']
         }
       });
-      
-      const { result, status, error_message } = response.data;
-      
-      if (status !== 'OK') {
-        console.error(`Google Places API returned status: ${status}`);
-        console.error('Error message:', error_message || 'No specific error message provided');
-        
-        // If the API key is invalid, return a simulated response for development
-        if (status === 'REQUEST_DENIED') {
-          const simulatedDetails = {
-            name: 'Simulated Pharmacy',
-            formatted_address: '123 Main St, Your City',
-            formatted_phone_number: '+1 (555) 123-4567',
-            website: 'https://example.com',
-            rating: 4.5,
-            user_ratings_total: 123,
-            opening_hours: {
-              open_now: true,
-              weekday_text: [
-                'Monday: 9:00 AM – 9:00 PM',
-                'Tuesday: 9:00 AM – 9:00 PM',
-                'Wednesday: 9:00 AM – 9:00 PM',
-                'Thursday: 9:00 AM – 9:00 PM',
-                'Friday: 9:00 AM – 9:00 PM',
-                'Saturday: 10:00 AM – 8:00 PM',
-                'Sunday: 10:00 AM – 6:00 PM'
-              ]
-            }
-          };
-          
-          return res.json({
-            success: true,
-            details: simulatedDetails,
-            note: 'Using simulated data due to API key issues'
-          });
-        }
-        
-        return res.status(500).json({ 
-          success: false, 
-          message: `Google Places API error: ${status}`,
-          details: error_message || 'No details available'
-        });
-      }
-      
-      // Return the details
+
       return res.json({
         success: true,
-        details: result
+        pharmacy: response.data.result
       });
     } catch (error) {
       console.error('Error fetching pharmacy details:', error);
       return res.status(500).json({ 
         success: false, 
         message: 'Error fetching pharmacy details',
-        details: error.message
+        error: error.message 
       });
     }
   } catch (error) {
-    console.error('Error in getPharmacyDetails controller:', error);
+    console.error('Error in getPharmacyDetails:', error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Error processing pharmacy details request',
-      details: error.message
+      message: 'Internal server error',
+      error: error.message 
     });
   }
 };
@@ -461,4 +363,35 @@ function generateSimulatedPharmacies(lat, lng) {
       }]
     }
   ];
-} 
+}
+
+// Search for nearby pharmacies
+export const searchNearbyPharmacies = async (req, res) => {
+  try {
+    const { latitude, longitude, radius = 5000 } = req.body;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const response = await client.placesNearby({
+      params: {
+        location: { lat: latitude, lng: longitude },
+        radius: radius,
+        type: 'pharmacy',
+        key: GOOGLE_PLACES_API_KEY
+      }
+    });
+
+    // Process results and identify generic pharmacies
+    const processedPharmacies = response.data.results.map(place => ({
+      ...place,
+      isGeneric: isGenericPharmacy(place)
+    }));
+
+    res.json(processedPharmacies);
+  } catch (error) {
+    console.error('Error searching pharmacies:', error);
+    res.status(500).json({ error: 'Failed to search for pharmacies' });
+  }
+}; 

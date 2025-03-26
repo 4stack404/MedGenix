@@ -215,7 +215,7 @@ export const EMAIL_VERIFY_TEMPLATE = `
             <tbody>
               <tr>
                 <td class="header">
-                  <h1>Verify Your Email</h1>
+                  <h1>Verify Your Account</h1>
                 </td>
               </tr>
               <tr>

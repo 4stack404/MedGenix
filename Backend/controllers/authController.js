@@ -143,9 +143,11 @@ export const verifyLoginOTP = async (req, res) => {
     await user.save();
 
     // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id }, 
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    ).trim();
 
     // Set cookie
     res.cookie("token", token, {
@@ -163,9 +165,9 @@ export const verifyLoginOTP = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        isEmailVerified: user.isEmailVerified
+        isAccountVerified: user.isAccountVerified
       },
-      token // Include token in response for header auth
+      token
     });
   } catch (error) {
     console.error('OTP verification error:', error);
@@ -285,8 +287,8 @@ export const verifyEmail = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.isEmailVerified) {
-      return res.status(400).json({ success: false, message: 'Email is already verified' });
+    if (user.isAccountVerified) {
+      return res.status(400).json({ success: false, message: 'Account is already verified' });
     }
 
     if (!user.verifyOtp || !user.verifyOtpExpireAt) {
@@ -302,7 +304,7 @@ export const verifyEmail = async (req, res) => {
     }
 
     // Update user verification status
-    user.isEmailVerified = true;
+    user.isAccountVerified = true;
     user.verifyOtp = undefined;
     user.verifyOtpExpireAt = undefined;
     await user.save();
@@ -323,27 +325,62 @@ export const verifyEmail = async (req, res) => {
     // Return success with updated user data and token
     res.json({
       success: true,
-      message: 'Email verified successfully',
+      message: 'Account verified successfully',
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        isEmailVerified: true
+        isAccountVerified: true
       },
       token
     });
   } catch (error) {
-    console.error('Verify email error:', error);
-    res.status(500).json({ success: false, message: 'Failed to verify email' });
+    console.error('Verify account error:', error);
+    res.status(500).json({ success: false, message: 'Failed to verify account' });
   }
 };
 
-// check if the user is authenticated
+// Check authentication status
 export const isAuthenticated = async (req, res) => {
   try {
-    return res.json({ success: true, message: "User is authenticated" });
+    // The user object is already attached by the authMiddleware
+    if (!req.user) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Not authenticated" 
+      });
+    }
+
+    // Generate a new token to refresh the session
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    // Set the new token in cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Return success with user data and new token
+    return res.json({
+      success: true,
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        isAccountVerified: req.user.isAccountVerified
+      },
+      token
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Auth check error:', error);
+    return res.status(401).json({ 
+      success: false, 
+      message: "Authentication failed" 
+    });
   }
 };
 
@@ -560,9 +597,9 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        isEmailVerified: user.isEmailVerified
+        isAccountVerified: user.isAccountVerified
       },
-      token // Include token in response for header auth
+      token
     });
   } catch (error) {
     console.error('Login error:', error);

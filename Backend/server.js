@@ -6,13 +6,12 @@ import connectDB from './config/mongodb.js';
 import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import prescriptionRouter from './routes/prescriptionRoutes.js';
+import pharmacyRouter from './routes/pharmacyRoutes.js';
 import session from 'express-session';
 import mongoose from 'mongoose';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import translationRouter from './routes/translationRoutes.js';
-import pharmacyRouter from './routes/pharmacyRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,44 +19,34 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Log environment variables on startup
-console.log('Starting server with:');
-console.log('- NODE_ENV:', process.env.NODE_ENV);
-console.log('- PORT:', PORT);
-console.log('- FRONTEND_URL:', process.env.FRONTEND_URL);
-console.log('- GOOGLE_MAPS_API_KEY available:', process.env.GOOGLE_MAPS_API_KEY ? 'Yes' : 'No');
-
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
-}
-
 // Connect to MongoDB
 connectDB();
 
-// CORS Configuration - Allow requests from any origin during development
+// CORS Configuration
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', process.env.FRONTEND_URL],
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['Set-Cookie']
 }));
 
 // Session Middleware
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'medgenix-fallback-secret',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   })
@@ -76,23 +65,16 @@ app.get('/', (req, res) => {
   res.json({ message: 'API is working!' });
 });
 
-// Log incoming requests to pharmacy endpoints
-app.use('/api/pharmacies', (req, res, next) => {
-  console.log(`${new Date().toISOString()} - Pharmacy API request: ${req.method} ${req.url}`);
-  next();
-});
-
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/prescriptions', prescriptionRouter);
-app.use('/api/translation', translationRouter);
-app.use('/api/pharmacies', pharmacyRouter);
+app.use('/api/pharmacy', pharmacyRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
-  console.error('Server error:', err.stack);
-  res.status(500).json({ success: false, message: 'Something broke!', error: err.message });
+  console.error(err.stack);
+  res.status(500).json({ success: false, message: 'Something broke!' });
 });
 
 // 404 handler
@@ -102,7 +84,6 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
 });
 
 export default app;
