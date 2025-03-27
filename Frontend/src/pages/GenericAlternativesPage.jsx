@@ -24,7 +24,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Card)(() => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -99,11 +99,48 @@ const GenericAlternativesPage = () => {
         duration: ''
       }));
 
+      // Get alternatives from the production API
       const response = await axios.post(
         'https://medgenix-production.up.railway.app/api/generic-alternatives/',
         searchData
       );
       setAlternatives(response.data);
+
+      // Extract first generic name from each medicine's alternatives
+      const genericNames = response.data
+        .map(medicine => {
+          const firstAlternative = medicine.generic_alternatives[0];
+          if (firstAlternative && firstAlternative.generic_name) {
+            console.log('Found generic name:', firstAlternative.generic_name);
+            return firstAlternative.generic_name;
+          }
+          return null;
+        })
+        .filter(name => name);
+
+      // If we have any generic names, update the stats using local backend
+      if (genericNames.length > 0) {
+        console.log('Sending generic names to backend:', genericNames);
+        try {
+          const statsResponse = await axios.post(
+            'http://localhost:8000/api/generic-medicines/update-stats',
+            { genericNames },
+            {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          console.log('Generic medicine stats updated successfully:', statsResponse.data);
+        } catch (statsError) {
+          console.error('Error updating generic medicine stats:', statsError);
+          if (statsError.response) {
+            console.error('Error response:', statsError.response.data);
+          }
+        }
+      } else {
+        console.log('No generic names found in the response');
+      }
     } catch (err) {
       console.error('Error fetching alternatives:', err);
       setError('Failed to fetch generic alternatives. Please try again.');
@@ -159,7 +196,7 @@ const GenericAlternativesPage = () => {
               Enter Your Medication
             </Typography>
 
-            {medicines.map((medicine, index) => (
+            {medicines.map((medicine) => (
               <Box key={medicine.id} sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
                 <TextField
                   fullWidth

@@ -25,6 +25,7 @@ import PrescriptionScannerPage from './pages/PrescriptionScannerPage';
 import PrescriptionPage from './pages/PrescriptionPage';
 import { LanguageProvider } from './context/LanguageContext';
 import GenericAlternativesPage from './pages/GenericAlternativesPage';
+import ChemistDashboard from './pages/ChemistDashboard';
 
 
 // Create a theme with teal as the primary color
@@ -193,6 +194,7 @@ function App() {
           }}>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/chemist-dashboard" element={<ChemistDashboard />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/verify-email" element={<EmailVerifyPage />} />
