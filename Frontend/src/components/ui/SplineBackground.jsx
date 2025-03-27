@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { Box } from '@mui/material';
 import Spline from '@splinetool/react-spline';
+import LoadingAnimation from '../common/LoadingAnimation';
 
 const SplineBackground = () => {
   const [loading, setLoading] = useState(true);
@@ -57,10 +58,7 @@ const SplineBackground = () => {
             gap: 2,
           }}
         >
-          <CircularProgress color="primary" />
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-            Loading 3D Experience...
-          </Box>
+          <LoadingAnimation text="Loading 3D Experience..." />
         </Box>
       )}
 

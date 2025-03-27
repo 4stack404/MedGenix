@@ -13,6 +13,7 @@ import OtpVerificationPage from './pages/OtpVerificationPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { LoadingProvider } from './context/LoadingContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import EmailVerifyPage from './pages/EmailVerifyPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -24,6 +25,9 @@ import HowItWorksPage from './pages/HowItWorksPage';
 import FAQPage from './pages/FAQPage';
 import PrescriptionPage from './pages/PrescriptionPage';
 import PrescriptionScannerPage from './pages/PrescriptionScannerPage';
+import AnimationTestPage from './pages/AnimationTestPage';
+import PrescriptionGuidePage from './pages/PrescriptionGuidePage';
+import AboutUsPage from './pages/AboutUsPage';
 
 // Create a theme with teal as the primary color
 const theme = createTheme({
@@ -181,33 +185,38 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <LanguageProvider>
-          <BrowserRouter>
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              minHeight: '100vh', 
-              position: 'relative',
-              overflowX: 'hidden',
-            }}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/signup" element={<SignUpPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/verify-email" element={<EmailVerifyPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/otp-verification" element={<OtpVerificationPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/upload-prescription" element={<PrescriptionScannerPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/prescriptions" element={<PrescriptionPage />} />
+          <LoadingProvider>
+            <BrowserRouter>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                minHeight: '100vh', 
+                position: 'relative',
+                overflowX: 'hidden',
+              }}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/signup" element={<SignUpPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/verify-email" element={<EmailVerifyPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/otp-verification" element={<OtpVerificationPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/upload-prescription" element={<PrescriptionScannerPage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/prescriptions" element={<PrescriptionPage />} />
                   <Route path="/medicine/:id" element={<MedicineDetailPage />} />
                   <Route path="/generic/medicine/:id" element={<GenericMedicineDetailPage />} />
                   <Route path="/pharmacy-locate" element={<PharmacyLocatePage />} />
                   <Route path="/how-it-works" element={<HowItWorksPage />} />
                   <Route path="/faq" element={<FAQPage />} />
+                  <Route path="/test-animation" element={<AnimationTestPage />} />
+                  <Route path="/prescription-guide" element={<PrescriptionGuidePage />} />
+                  <Route path="/about-us" element={<AboutUsPage />} />
                 </Routes>
-            </Box>
-          </BrowserRouter>
+              </Box>
+            </BrowserRouter>
+          </LoadingProvider>
         </LanguageProvider>
       </AuthProvider>
     </ThemeProvider>

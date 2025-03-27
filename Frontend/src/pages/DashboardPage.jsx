@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import LoadingAnimation from '../components/common/LoadingAnimation';
 import { useAuth } from '../context/AuthContext';
 import {
   Box,
@@ -71,6 +72,8 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { formatDate } from '../utils/dateUtils';
+import useApi from '../hooks/useApi';
+import { useLoading } from '../context/LoadingContext';
 
 // Additional styles for medicine card flip effect
 import { createGlobalStyle } from 'styled-components';
@@ -208,6 +211,8 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const api = useApi();
+  const { showLoading, hideLoading } = useLoading();
   
   // Add missing state variables
   const [totalSavings, setTotalSavings] = useState(1250);
@@ -232,27 +237,37 @@ const DashboardPage = () => {
     const fetchPrescriptions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/prescriptions/user`, {
+        showLoading('Loading prescriptions...');
+        
+        const response = await api.get(`${import.meta.env.VITE_API_URL}/api/prescriptions/user`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setPrescriptions(response.data);
-        setTotalPrescriptions(response.data.length);
+        
+        // Ensure response is an array
+        const prescriptionsData = Array.isArray(response) ? response : [];
+        setPrescriptions(prescriptionsData);
+        setTotalPrescriptions(prescriptionsData.length);
         
         // Calculate total medicines from prescriptions
         let medicineCount = 0;
-        response.data.forEach(prescription => {
+        prescriptionsData.forEach(prescription => {
           medicineCount += prescription.medicines?.length || 0;
         });
         setTotalMedicines(medicineCount);
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
+        // Set empty array on error to prevent map/forEach errors
+        setPrescriptions([]);
+        setTotalPrescriptions(0);
+        setTotalMedicines(0);
       } finally {
         setLoading(false);
+        hideLoading();
       }
     };
 
     fetchPrescriptions();
-  }, []);
+  }, [showLoading, hideLoading, api]);
 
   const handleScanPrescription = () => {
     navigate('/upload-prescription');
@@ -831,7 +846,7 @@ const DashboardPage = () => {
             <StyledPaper>
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                  <CircularProgress />
+                  <LoadingAnimation text="Loading prescriptions..." />
                 </Box>
               ) : prescriptions.length === 0 ? (
                 <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>

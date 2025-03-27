@@ -169,84 +169,58 @@ const HowItWorksPage = () => {
                     <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>1</Typography>
                   </Box>
                   <Typography variant="h4" sx={stepStyles.stepTitle}>
-                    Enter Your Medication
+                    Scan Your Prescription
                   </Typography>
                   <Typography variant="body1" sx={stepStyles.stepDescription}>
-                    Start by entering the name of your prescribed medication. Our system will identify it and prepare to find alternatives.
+                    Simply scan or upload your prescription using our advanced OCR technology. Our AI-powered system will analyze it instantly to identify medications.
                   </Typography>
                   <List disablePadding>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Search by brand or generic name" />
+                      <ListItemText primary="Instant digital recognition of handwritten prescriptions" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Specify dosage and form" />
+                      <ListItemText primary="Accurate extraction of medication names and dosages" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Add multiple medications if needed" />
+                      <ListItemText primary="Secure and private prescription processing" />
+                    </ListItem>
+                    <ListItem disablePadding sx={stepStyles.listItem}>
+                      <ListItemIcon sx={stepStyles.listIcon}>
+                        <CheckCircleOutlineIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary="Support for multiple prescription formats" />
                     </ListItem>
                   </List>
                 </Box>
               </Grid>
               <Grid item xs={12} md={6} component={motion.div} 
-                initial={{ opacity: 0, x: 30 }} 
+                initial={{ opacity: 0, x: -30 }} 
                 whileInView={{ opacity: 1, x: 0 }} 
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <Paper sx={stepStyles.stepCard}>
-                  <Box sx={{ position: 'relative', mb: 3 }}>
-                    <TextField
-                      fullWidth
-                      placeholder="Enter medication name..."
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon color="primary" />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '10px',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: theme.palette.primary.light,
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: theme.palette.primary.main,
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                    Popular searches:
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {popularMedications.map((med, index) => (
-                      <Chip
-                        key={index}
-                        label={med}
-                        size="small"
-                        sx={{
-                          backgroundColor: 'rgba(103, 194, 124, 0.1)',
-                          color: theme.palette.primary.dark,
-                          '&:hover': {
-                            backgroundColor: 'rgba(103, 194, 124, 0.2)',
-                          },
-                        }}
-                      />
-                    ))}
-                  </Box>
+                  <Box
+                    component="img"
+                    src="https://t4.ftcdn.net/jpg/02/14/68/61/360_F_214686197_9JhcTswvrd9jGYYbCNLuAVhvTIiLm9bm.jpg"
+                    alt="Medicine Extraction through OCR"
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '300px',
+                      objectFit: 'cover',
+                      borderRadius: '8px'
+                    }}
+                  />
                 </Paper>
               </Grid>
             </Grid>
@@ -260,50 +234,18 @@ const HowItWorksPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <Paper sx={stepStyles.stepCard}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <MedicationIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Generic Alternatives for Lipitor
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ pb: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Atorvastatin 10mg</Typography>
-                        <Chip 
-                          label="85% Savings" 
-                          size="small" 
-                          sx={{ 
-                            backgroundColor: 'rgba(103, 194, 124, 0.2)', 
-                            color: '#4a9d5d',
-                            fontWeight: 500 
-                          }} 
-                        />
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="textSecondary">Generic</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>$12.99</Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ pb: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Atorvastatin 20mg</Typography>
-                        <Chip 
-                          label="83% Savings" 
-                          size="small" 
-                          sx={{ 
-                            backgroundColor: 'rgba(103, 194, 124, 0.2)', 
-                            color: '#4a9d5d',
-                            fontWeight: 500 
-                          }} 
-                        />
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="textSecondary">Generic</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>$15.50</Typography>
-                      </Box>
-                    </Box>
-                  </Box>
+                  <Box
+                    component="img"
+                    src="https://labelyourdata.com/img/article-illustrations/ocr_light.jpg"
+                    alt="Medicine Extraction through OCR"
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '300px',
+                      objectFit: 'cover',
+                      borderRadius: '8px'
+                    }}
+                  />
                 </Paper>
               </Grid>
               <Grid item xs={12} md={6} component={motion.div} 
@@ -317,29 +259,35 @@ const HowItWorksPage = () => {
                     <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>2</Typography>
                   </Box>
                   <Typography variant="h4" sx={stepStyles.stepTitle}>
-                    View Generic Alternatives
+                    Extract Medicine Through OCR
                   </Typography>
                   <Typography variant="body1" sx={stepStyles.stepDescription}>
-                    We'll show you FDA-approved generic alternatives to your medication that can save you money without compromising on quality.
+                    Our advanced OCR technology automatically extracts and identifies medication names, dosages, and instructions from your prescription with high accuracy.
                   </Typography>
                   <List disablePadding>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Compare active ingredients" />
+                      <ListItemText primary="Intelligent text recognition and extraction" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="See potential savings percentages" />
+                      <ListItemText primary="Accurate dosage and frequency detection" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Read about bioequivalence" />
+                      <ListItemText primary="Automatic medicine name identification" />
+                    </ListItem>
+                    <ListItem disablePadding sx={stepStyles.listItem}>
+                      <ListItemIcon sx={stepStyles.listIcon}>
+                        <CheckCircleOutlineIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary="Real-time processing and verification" />
                     </ListItem>
                   </List>
                 </Box>
@@ -359,29 +307,29 @@ const HowItWorksPage = () => {
                     <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>3</Typography>
                   </Box>
                   <Typography variant="h4" sx={stepStyles.stepTitle}>
-                    Compare Pharmacy Prices
+                    Get Generic Alternatives
                   </Typography>
                   <Typography variant="body1" sx={stepStyles.stepDescription}>
-                    We'll show you which pharmacies near you offer the best prices for your medication, helping you save even more.
+                    Our system identifies generic alternatives for your prescribed medications, helping you save significantly on your healthcare costs.
                   </Typography>
                   <List disablePadding>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Compare prices across multiple pharmacies" />
+                      <ListItemText primary="Find equivalent generic medications" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="See distance and location information" />
+                      <ListItemText primary="Compare prices of brand vs generic" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Filter by distance or price" />
+                      <ListItemText primary="View detailed medication information" />
                     </ListItem>
                   </List>
                 </Box>
@@ -393,32 +341,27 @@ const HowItWorksPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <Paper sx={stepStyles.stepCard}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <LocalPharmacyIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Pharmacy Prices for Atorvastatin 10mg
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ pb: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>PharmaSave</Typography>
-                        <Typography variant="body2" color="textSecondary">1.2 miles away</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="textSecondary">30 tablets</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>$12.99</Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ pb: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>MediMart</Typography>
-                        <Typography variant="body2" color="textSecondary">0.8 miles away</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="textSecondary">30 tablets</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>$14.50</Typography>
-                      </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      component="img"
+                      src="https://drbest.in/wp-content/uploads/2024/07/generic-drugs.jpg"
+                      alt="Generic Medicine Alternatives"
+                      sx={{
+                        width: '60%',
+                        height: 'auto',
+                        maxHeight: '300px',
+                        objectFit: 'cover',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                        Calpol
+                      </Typography>
+                      <ArrowForwardIcon sx={{ color: theme.palette.primary.main }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                        Paracetamol
+                      </Typography>
                     </Box>
                   </Box>
                 </Paper>
@@ -434,18 +377,26 @@ const HowItWorksPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <Paper sx={stepStyles.stepCard}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <SavingsIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Your Potential Savings
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Box
+                      component="img"
+                      src="https://media.licdn.com/dms/image/v2/C4E12AQE2_pEAGtFSQw/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1637585345564?e=2147483647&v=beta&t=5Qsmmxr5c3Lo4QeJAA5m6G3a67Jpt03DZ0Hl2DLPxPI"
+                      alt="Price Comparison"
+                      sx={{
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: '300px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        mb: 2
+                      }}
+                    />
+                    <Typography variant="body1" color="textSecondary" sx={{ mb: 1 }}>
+                      By switching to generic alternatives
                     </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'center', py: 2 }}>
-                    <Typography variant="body1" color="textSecondary" sx={{ mb: 1 }}>By switching to generic alternatives</Typography>
                     <Typography 
                       variant="h3" 
                       sx={{ 
-                        mb: 1, 
                         fontWeight: 700,
                         backgroundImage: 'linear-gradient(to bottom, #67c27c, #008080)',
                         backgroundClip: 'text',
@@ -455,25 +406,6 @@ const HowItWorksPage = () => {
                     >
                       Save up to 85%
                     </Typography>
-                    <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>That's $77.00 per month or $924.00 per year</Typography>
-                    <Button 
-                      variant="contained" 
-                      size="large"
-                      sx={{ 
-                        borderRadius: '50px',
-                        px: 4,
-                        py: 1.5,
-                        background: 'linear-gradient(to bottom, #67c27c, #008080)',
-                        '&:hover': {
-                          background: 'linear-gradient(to bottom, #5bb36f, #006666)',
-                          boxShadow: '0 6px 15px rgba(0, 128, 128, 0.3)',
-                          transform: 'translateY(-3px)',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      Get Your Savings
-                    </Button>
                   </Box>
                 </Paper>
               </Grid>
@@ -488,29 +420,29 @@ const HowItWorksPage = () => {
                     <Typography variant="h5" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>4</Typography>
                   </Box>
                   <Typography variant="h4" sx={stepStyles.stepTitle}>
-                    Save Money on Your Prescriptions
+                    Get Price Comparisons
                   </Typography>
                   <Typography variant="body1" sx={stepStyles.stepDescription}>
-                    Take your prescription to your chosen pharmacy or discuss the generic alternatives with your healthcare provider to start saving.
+                    Compare prices across multiple platforms to find the best deals for your medications.
                   </Typography>
                   <List disablePadding>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Print or email your savings information" />
+                      <ListItemText primary="Compare prices across multiple platforms" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Show to your pharmacist or doctor" />
+                      <ListItemText primary="View detailed price breakdowns" />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Track your savings over time" />
+                      <ListItemText primary="Find the best deals and discounts" />
                     </ListItem>
                   </List>
                 </Box>
@@ -540,20 +472,10 @@ const HowItWorksPage = () => {
                 Our Commitment to Safety
               </Typography>
               <Typography variant="body1" sx={{ color: theme.palette.text.secondary, maxWidth: '800px', mx: 'auto', mb: 4 }}>
-                MedGenix only recommends FDA-approved generic medications that have been proven to be bioequivalent to their brand-name counterparts. We prioritize your health and safety above all else.
+                MedGenix only recommends generic medications that have been proven to be bioequivalent to their brand-name counterparts. We prioritize your health and safety above all else.
               </Typography>
             </Box>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 3, borderRadius: '12px', textAlign: 'center', height: '100%' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: theme.palette.primary.dark }}>
-                    FDA Approved
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    All recommended medications are FDA-approved and meet strict quality standards.
-                  </Typography>
-                </Paper>
-              </Grid>
+            <Grid container spacing={3} justifyContent="center">
               <Grid item xs={12} md={4}>
                 <Paper sx={{ p: 3, borderRadius: '12px', textAlign: 'center', height: '100%' }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: theme.palette.primary.dark }}>
@@ -561,16 +483,6 @@ const HowItWorksPage = () => {
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     Generic medications contain the same active ingredients and work the same way in the body.
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 3, borderRadius: '12px', textAlign: 'center', height: '100%' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: theme.palette.primary.dark }}>
-                    Verified Pharmacies
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    We only partner with licensed pharmacies that meet our quality standards.
                   </Typography>
                 </Paper>
               </Grid>

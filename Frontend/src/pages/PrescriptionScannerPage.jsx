@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -19,6 +19,16 @@ import { useSnackbar } from 'notistack';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import { uploadPrescription } from '../services/prescriptionService';
+import { useLoading } from '../context/LoadingContext';
+
+// Define pulse animation
+const pulseKeyframes = `
+  @keyframes pulse {
+    0% { opacity: 0.6; background-position: 0% 50%; }
+    50% { opacity: 1; background-position: 100% 50%; }
+    100% { opacity: 0.6; background-position: 0% 50%; }
+  }
+`;
 
 // Styled components
 const UploadBox = styled(Paper)(({ theme }) => ({
@@ -80,6 +90,17 @@ const PrescriptionScannerPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { showLoading, hideLoading } = useLoading();
+
+  // Inject keyframes into document
+  useEffect(() => {
+    const styleEl = document.createElement('style');
+    styleEl.textContent = pulseKeyframes;
+    document.head.appendChild(styleEl);
+    return () => {
+      document.head.removeChild(styleEl);
+    };
+  }, []);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -129,6 +150,8 @@ const PrescriptionScannerPage = () => {
 
     try {
       setLoading(true);
+      showLoading('Analyzing prescription...');
+      
       const formData = new FormData();
       formData.append('prescription', selectedFile);
 
@@ -160,6 +183,7 @@ const PrescriptionScannerPage = () => {
       }
     } finally {
       setLoading(false);
+      hideLoading();
     }
   };
 
@@ -234,7 +258,18 @@ const PrescriptionScannerPage = () => {
                 sx={{ py: 1.5 }}
               >
                 {loading ? (
-                  <CircularProgress size={24} color="inherit" />
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box sx={{ 
+                      width: 16, 
+                      height: 16, 
+                      mr: 1,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(90deg, #008080, #67c27c, #008080)',
+                      backgroundSize: '200% 200%',
+                      animation: 'pulse 2s infinite ease-in-out' 
+                    }} />
+                    Processing
+                  </Box>
                 ) : (
                   'Continue'
                 )}
