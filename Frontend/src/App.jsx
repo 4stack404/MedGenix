@@ -24,7 +24,8 @@ import FAQPage from './pages/FAQPage';
 import PrescriptionScannerPage from './pages/PrescriptionScannerPage';
 import PrescriptionPage from './pages/PrescriptionPage';
 import { LanguageProvider } from './context/LanguageContext';
-// import LanguageSelector from './components/ui/LanguageSelector';
+import GenericAlternativesPage from './pages/GenericAlternativesPage';
+
 
 // Create a theme with teal as the primary color
 const theme = createTheme({
@@ -206,6 +207,7 @@ function App() {
               <Route path="/pharmacy-locate" element={<PharmacyLocatePage />} />
               <Route path="/how-it-works" element={<HowItWorksPage />} />
               <Route path="/faq" element={<FAQPage />} />
+              <Route path="/generic-alternatives" element={<GenericAlternativesPage />} />
             </Routes>
           </Box>
         </BrowserRouter>

@@ -12,7 +12,11 @@ import {
   InputAdornment, 
   IconButton, 
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { 
@@ -71,7 +75,8 @@ const SignupPage = () => {
     name: '',
     email: '',
     mobileNumber: '',
-    password: ''
+    password: '',
+    role: 'user'
   });
 
   // Form errors
@@ -305,6 +310,32 @@ const SignupPage = () => {
                       ),
                     }}
                   />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <FormControl component="fieldset">
+                    <Typography variant="subtitle1" gutterBottom>
+                      Are you a chemist?
+                    </Typography>
+                    <RadioGroup
+                      row
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      sx={{ gap: 2 }}
+                    >
+                      <FormControlLabel 
+                        value="user" 
+                        control={<Radio color="primary" />} 
+                        label="No, I'm a user" 
+                      />
+                      <FormControlLabel 
+                        value="chemist" 
+                        control={<Radio color="primary" />} 
+                        label="Yes, I'm a chemist" 
+                      />
+                    </RadioGroup>
+                  </FormControl>
                 </Grid>
               </Grid>
 
