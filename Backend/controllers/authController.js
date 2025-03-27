@@ -15,7 +15,7 @@ import {
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export const register = async (req, res) => {
-  const { name, email, password, mobileNumber } = req.body;
+  const { name, email, password, mobileNumber, role } = req.body;
 
   if (!name || !email || !password || !mobileNumber) {
     return res
@@ -41,7 +41,8 @@ export const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      mobileNumber
+      mobileNumber,
+      role: role || 'user' // Set role to 'user' if not provided
     });
 
     // Send welcome email
@@ -63,7 +64,9 @@ export const register = async (req, res) => {
       user: {
         id: newUser._id,
         name: newUser.name,
-        email: newUser.email
+        email: newUser.email,
+        role: newUser.role,
+        isAccountVerified: newUser.isAccountVerified
       }
     });
   } catch (error) {
