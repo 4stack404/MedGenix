@@ -1,101 +1,24 @@
 import express from 'express';
-import cors from 'cors';
-import 'dotenv/config';
-import cookieParser from 'cookie-parser';
-import connectDB from './config/mongodb.js';
-import authRouter from './routes/authRoutes.js';
-import userRouter from './routes/userRoutes.js';
-import session from 'express-session';
-import mongoose from 'mongoose';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import translationRouter from './routes/translationRoutes.js';
-import pharmacyRouter from './routes/pharmacyRoutes.js';
 import multer from 'multer';
+import path from 'path';
 import axios from 'axios';
 import FormData from 'form-data';
-import ocrRouter from './routes/ocrRoutes.js';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const PORT = process.env.PORT || 8000;
+const router = express.Router();
 
-// Log environment variables on startup
-console.log('Starting server with:');
-console.log('- NODE_ENV:', process.env.NODE_ENV);
-console.log('- PORT:', PORT);
-console.log('- FRONTEND_URL:', process.env.FRONTEND_URL);
-console.log('- GOOGLE_MAPS_API_KEY available:', process.env.GOOGLE_MAPS_API_KEY ? 'Yes' : 'No');
+// OCR API Configuration
+const OCR_API_URL = process.env.OCR_API_URL || 'https://medgenix-production.up.railway.app/process-prescription/';
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
-
-// Create logs directory if it doesn't exist
-const logsDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
-}
-
-// Connect to MongoDB
-connectDB();
-
-// CORS Configuration - Allow requests from any origin during development
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', process.env.FRONTEND_URL],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Session Middleware
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'medgenix-fallback-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  })
-);
-
-// Middlewares
-app.use(express.json());
-app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
-
-// Explicitly handle OPTIONS requests for preflight
-app.options('*', cors());
-
-// Test route
-app.get('/', (req, res) => {
-  res.json({ message: 'API is working!' });
-});
-
-// Log incoming requests to pharmacy endpoints
-app.use('/api/pharmacies', (req, res, next) => {
-  console.log(`${new Date().toISOString()} - Pharmacy API request: ${req.method} ${req.url}`);
-  next();
-});
-
-// Log incoming requests to OCR endpoints
-app.use('/api', (req, res, next) => {
-  console.log(`${new Date().toISOString()} - OCR API request: ${req.method} ${req.originalUrl}`);
-  next();
-});
-
-// Configure multer for file uploads for OCR
+// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(__dirname, 'uploads');
+    const uploadsDir = path.join(__dirname, '../uploads');
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
@@ -120,18 +43,14 @@ const upload = multer({
   }
 });
 
-// OCR API Configuration
-const OCR_API_URL = process.env.OCR_API_URL || 'https://medgenix-production.up.railway.app/process-prescription/';
-
-// OCR routes directly in server.js instead of using router
-app.get('/api/test', (req, res) => {
-  console.log('Test endpoint hit at:', new Date().toISOString());
-  res.json({ message: 'Backend is working!' });
+// Test endpoint
+router.get('/test', (req, res) => {
+  console.log('OCR test endpoint hit from router');
+  res.json({ message: 'Backend OCR API is working!' });
 });
 
 // File upload endpoint
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  console.log('Upload endpoint hit at:', new Date().toISOString());
+router.post('/upload', upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -150,7 +69,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 });
 
 // OCR Processing endpoint
-app.post('/api/process-ocr', upload.single('file'), async (req, res) => {
+router.post('/process-ocr', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -267,7 +186,7 @@ app.post('/api/process-ocr', upload.single('file'), async (req, res) => {
 });
 
 // Create a simple OCR simulation endpoint for testing
-app.post('/api/simulate-ocr', upload.single('file'), (req, res) => {
+router.post('/simulate-ocr', upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -318,43 +237,4 @@ app.post('/api/simulate-ocr', upload.single('file'), (req, res) => {
   }
 });
 
-// Routes
-app.use('/api/auth', authRouter);
-app.use('/api/user', userRouter);
-app.use('/api/translation', translationRouter);
-app.use('/api/pharmacies', pharmacyRouter);
-
-// Add this logging middleware to debug OCR routes
-app.use('/api/ocr', (req, res, next) => {
-  console.log(`OCR router request: ${req.method} ${req.path}`);
-  next();
-});
-
-// Register OCR router with a more specific path
-app.use('/api/ocr', ocrRouter);
-
-// Keep the direct routes for compatibility
-app.get('/api/test', (req, res) => {
-  console.log('Direct test endpoint hit at:', new Date().toISOString());
-  res.json({ message: 'Backend direct route is working!' });
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('Server error:', err.stack);
-  console.error('Error on route:', req.method, req.originalUrl);
-  res.status(500).json({ success: false, message: 'Something broke!', error: err.message });
-});
-
-// 404 handler
-app.use((req, res) => {
-  console.log('404 Not Found:', req.method, req.originalUrl);
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
-});
-
-export default app;
+export default router; 

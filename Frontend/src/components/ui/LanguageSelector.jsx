@@ -178,7 +178,7 @@ const LanguageSelector = () => {
               {getLanguageFlag(langName)}
             </ListItemIcon>
             <ListItemText>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box component="div" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant="body2">{langName}</Typography>
                 <Typography variant="caption" sx={{ ml: 1, opacity: 0.7 }}>
                   {getNativeName(langName)}

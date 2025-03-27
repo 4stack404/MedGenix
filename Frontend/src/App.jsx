@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Box } from '@mui/material';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from './components/layout/Header';
 import HeroSection from './components/sections/HeroSection';
 import FeaturesSection from './components/sections/FeaturesSection';
@@ -13,7 +13,6 @@ import OtpVerificationPage from './pages/OtpVerificationPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
-import ProtectedRoute from './components/ProtectedRoute';
 import EmailVerifyPage from './pages/EmailVerifyPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
@@ -22,8 +21,10 @@ import GenericMedicineDetailPage from './pages/GenericMedicineDetailPage';
 import PharmacyLocatePage from './pages/PharmacyLocatePage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import FAQPage from './pages/FAQPage';
-import PrescriptionPage from './pages/PrescriptionPage';
-import PrescriptionScannerPage from './pages/PrescriptionScannerPage';
+import PrescriptionUploadPage from './pages/FileUploadPage';
+import PrescriptionDetailPage from './pages/PrescriptionDetailPage';
+import GenericAlternativesPage from './pages/GenericAlternativesPage';
+import MedicineComparisonPage from './pages/MedicineComparisonPage';
 
 // Create a theme with teal as the primary color
 const theme = createTheme({
@@ -197,15 +198,17 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/otp-verification" element={<OtpVerificationPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/upload-prescription" element={<PrescriptionScannerPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/prescriptions" element={<PrescriptionPage />} />
-                  <Route path="/medicine/:id" element={<MedicineDetailPage />} />
-                  <Route path="/generic/medicine/:id" element={<GenericMedicineDetailPage />} />
-                  <Route path="/pharmacy-locate" element={<PharmacyLocatePage />} />
-                  <Route path="/how-it-works" element={<HowItWorksPage />} />
-                  <Route path="/faq" element={<FAQPage />} />
-                </Routes>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/medicine/:id" element={<MedicineDetailPage />} />
+                <Route path="/generic/medicine/:id" element={<GenericMedicineDetailPage />} />
+                <Route path="/pharmacy-locate" element={<PharmacyLocatePage />} />
+                <Route path="/how-it-works" element={<HowItWorksPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/file-upload" element={<PrescriptionUploadPage />} />
+                <Route path="/prescription/:id" element={<PrescriptionDetailPage />} />
+                <Route path="/generic-alternatives" element={<GenericAlternativesPage />} />
+                <Route path="/compare-medicines" element={<MedicineComparisonPage />} />
+              </Routes>
             </Box>
           </BrowserRouter>
         </LanguageProvider>

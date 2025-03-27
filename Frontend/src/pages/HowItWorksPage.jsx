@@ -179,19 +179,19 @@ const HowItWorksPage = () => {
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Search by brand or generic name" />
+                      <ListItemText primary={<Typography component="div">Search by brand or generic name</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Specify dosage and form" />
+                      <ListItemText primary={<Typography component="div">Specify dosage and form</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Add multiple medications if needed" />
+                      <ListItemText primary={<Typography component="div">Add multiple medications if needed</Typography>} />
                     </ListItem>
                   </List>
                 </Box>
@@ -327,19 +327,19 @@ const HowItWorksPage = () => {
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Compare active ingredients" />
+                      <ListItemText primary={<Typography component="div">Compare active ingredients</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="See potential savings percentages" />
+                      <ListItemText primary={<Typography component="div">See potential savings percentages</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Read about bioequivalence" />
+                      <ListItemText primary={<Typography component="div">Read about bioequivalence</Typography>} />
                     </ListItem>
                   </List>
                 </Box>
@@ -369,19 +369,19 @@ const HowItWorksPage = () => {
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Compare prices across multiple pharmacies" />
+                      <ListItemText primary={<Typography component="div">Compare prices across multiple pharmacies</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="See distance and location information" />
+                      <ListItemText primary={<Typography component="div">See distance and location information</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Filter by distance or price" />
+                      <ListItemText primary={<Typography component="div">Filter by distance or price</Typography>} />
                     </ListItem>
                   </List>
                 </Box>
@@ -498,19 +498,19 @@ const HowItWorksPage = () => {
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Print or email your savings information" />
+                      <ListItemText primary={<Typography component="div">Print or email your savings information</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Show to your pharmacist or doctor" />
+                      <ListItemText primary={<Typography component="div">Show to your pharmacist or doctor</Typography>} />
                     </ListItem>
                     <ListItem disablePadding sx={stepStyles.listItem}>
                       <ListItemIcon sx={stepStyles.listIcon}>
                         <CheckCircleOutlineIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary="Track your savings over time" />
+                      <ListItemText primary={<Typography component="div">Track your savings over time</Typography>} />
                     </ListItem>
                   </List>
                 </Box>

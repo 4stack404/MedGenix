@@ -22,15 +22,11 @@ import { useState } from 'react';
 const faqs = [
   {
     question: "What is MedGenix?",
-    answer: "MedGenix is a platform designed to help you find more affordable alternatives to your prescribed medications. We analyze your prescription to identify generic equivalents that can save you up to 70% while maintaining the same efficacy and safety as brand-name drugs."
-  },
-  {
-    question: "How does the prescription scanner work?",
-    answer: "Our prescription scanner uses advanced OCR (Optical Character Recognition) technology to read and interpret your prescription. Simply take a clear photo of your prescription, and our system will identify the medications, dosages, and frequency to recommend cost-effective generic alternatives."
+    answer: "MedGenix is a platform designed to help you find more affordable alternatives to your prescribed medications. We analyze medication information to identify generic equivalents that can save you up to 70% while maintaining the same efficacy and safety as brand-name drugs."
   },
   {
     question: "Is MedGenix free to use?",
-    answer: "Yes, MedGenix's core features are completely free to use. You can scan prescriptions, view generic alternatives, and compare prices at different pharmacies without any charge. We may offer premium features in the future, but our essential services will always remain free."
+    answer: "Yes, MedGenix's core features are completely free to use. You can view generic alternatives and compare prices at different pharmacies without any charge. We may offer premium features in the future, but our essential services will always remain free."
   },
   {
     question: "How accurate are the generic medicine recommendations?",
@@ -54,7 +50,7 @@ const faqs = [
   },
   {
     question: "Is my personal data safe on MedGenix?",
-    answer: "Yes, we take data security very seriously. All personal information and prescription data are encrypted using industry-standard protocols. We never share your personal health information with third parties without your explicit consent, and we comply with all relevant data protection regulations. Our systems undergo regular security audits to ensure your data remains protected."
+    answer: "Yes, we take data security very seriously. All personal information and medication data are encrypted using industry-standard protocols. We never share your personal health information with third parties without your explicit consent, and we comply with all relevant data protection regulations. Our systems undergo regular security audits to ensure your data remains protected."
   },
   {
     question: "How can I reset my password if I forget it?",
@@ -298,4 +294,4 @@ const FAQPage = () => {
   );
 };
 
-export default FAQPage; 
+export default FAQPage;

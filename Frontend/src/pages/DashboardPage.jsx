@@ -71,6 +71,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { formatDate } from '../utils/dateUtils';
+// import { getUserPrescriptions } from '../services/prescriptionService';
 
 // Additional styles for medicine card flip effect
 import { createGlobalStyle } from 'styled-components';
@@ -228,29 +229,29 @@ const DashboardPage = () => {
     { month: 'Dec', savings: 1250 }
   ]);
 
-  useEffect(() => {
-    const fetchPrescriptions = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/prescriptions/user`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setPrescriptions(response.data);
-        setTotalPrescriptions(response.data.length);
-        
-        // Calculate total medicines from prescriptions
-        let medicineCount = 0;
-        response.data.forEach(prescription => {
-          medicineCount += prescription.medicines?.length || 0;
-        });
-        setTotalMedicines(medicineCount);
-      } catch (error) {
-        console.error('Error fetching prescriptions:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchPrescriptions = async () => {
+    try {
+      setLoading(true);
+      
+      const prescriptionsData = await getUserPrescriptions();
+      setPrescriptions(prescriptionsData);
+      setTotalPrescriptions(prescriptionsData.length);
+      
+      // Calculate total medicines from prescriptions
+      let medicineCount = 0;
+      prescriptionsData.forEach(prescription => {
+        medicineCount += prescription.medicines?.length || 0;
+      });
+      setTotalMedicines(medicineCount);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching prescriptions:', error);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPrescriptions();
   }, []);
 

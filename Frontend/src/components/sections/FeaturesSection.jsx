@@ -13,7 +13,6 @@ import { useTheme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 
 // Import feature icons
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined';
@@ -25,11 +24,6 @@ import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 const featureBackgroundImg = 'https://www.medicaldevice-network.com/wp-content/uploads/sites/23/2021/02/shutterstock_544348294-1.jpg';
 
 const features = [
-  {
-    title: 'Read Your Prescription',
-    description: 'Smart OCR technology reads and processes your prescription accurately',
-    icon: <DescriptionOutlinedIcon fontSize="large" color="primary" />,
-  },
   {
     title: 'Chat Bot',
     description: 'AI medical assistant answers all your medication-related questions',

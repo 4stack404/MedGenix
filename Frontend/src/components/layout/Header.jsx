@@ -198,7 +198,7 @@ const Header = () => {
             }}
           >
             <ListItemText 
-              primary={<Typography>{item.name}</Typography>} 
+              primary={<Typography component="div">{item.name}</Typography>} 
               sx={{ 
                 textAlign: 'center',
                 '& .MuiTypography-root': {
