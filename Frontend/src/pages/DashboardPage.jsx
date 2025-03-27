@@ -40,7 +40,6 @@ import axios from 'axios';
 import { formatDate } from '../utils/dateUtils';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
-// import { getUserPrescriptions } from '../services/prescriptionService';
 
 // Additional styles for medicine card flip effect
 import { createGlobalStyle } from 'styled-components';
@@ -194,7 +193,6 @@ const DashboardPage = () => {
       }
     };
 
-  useEffect(() => {
     fetchPrescriptions();
   }, []);
 

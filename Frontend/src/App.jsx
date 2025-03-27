@@ -12,6 +12,8 @@ import LoginPage from './pages/LoginPage';
 import OtpVerificationPage from './pages/OtpVerificationPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import EmailVerifyPage from './pages/EmailVerifyPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
@@ -24,6 +26,7 @@ import PrescriptionUploadPage from './pages/FileUploadPage';
 import PrescriptionDetailPage from './pages/PrescriptionDetailPage';
 import GenericAlternativesPage from './pages/GenericAlternativesPage';
 import MedicineComparisonPage from './pages/MedicineComparisonPage';
+import ChemistDashboard from './pages/ChemistDashboard';
 
 // Create a theme with teal as the primary color
 const theme = createTheme({
@@ -191,22 +194,23 @@ function App() {
             }}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/chemist-dashboard" element={<ProtectedRoute><ChemistDashboard /></ProtectedRoute>} />
                 <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/verify-email" element={<EmailVerifyPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/otp-verification" element={<OtpVerificationPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/medicine/:id" element={<MedicineDetailPage />} />
-                <Route path="/generic/medicine/:id" element={<GenericMedicineDetailPage />} />
-                <Route path="/pharmacy-locate" element={<PharmacyLocatePage />} />
+                <Route path="/verify-email" element={<ProtectedRoute><EmailVerifyPage /></ProtectedRoute>} />
+                <Route path="/forgot-password" element={<ProtectedRoute><ForgotPasswordPage /></ProtectedRoute>} />
+                <Route path="/otp-verification" element={<ProtectedRoute><OtpVerificationPage /></ProtectedRoute>} />
+                <Route path="/reset-password" element={<ProtectedRoute><ResetPasswordPage /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/medicine/:id" element={<ProtectedRoute><MedicineDetailPage /></ProtectedRoute>} />
+                <Route path="/generic/medicine/:id" element={<ProtectedRoute><GenericMedicineDetailPage /></ProtectedRoute>} />
+                <Route path="/pharmacy-locate" element={<ProtectedRoute><PharmacyLocatePage /></ProtectedRoute>} />
                 <Route path="/how-it-works" element={<HowItWorksPage />} />
                 <Route path="/faq" element={<FAQPage />} />
-                <Route path="/file-upload" element={<PrescriptionUploadPage />} />
-                <Route path="/prescription/:id" element={<PrescriptionDetailPage />} />
-                <Route path="/generic-alternatives" element={<GenericAlternativesPage />} />
-                <Route path="/compare-medicines" element={<MedicineComparisonPage />} />
+                <Route path="/file-upload" element={<ProtectedRoute><PrescriptionUploadPage /></ProtectedRoute>} />
+                <Route path="/prescription/:id" element={<ProtectedRoute><PrescriptionDetailPage /></ProtectedRoute>} />
+                <Route path="/generic-alternatives" element={<ProtectedRoute><GenericAlternativesPage /></ProtectedRoute>} />
+                <Route path="/compare-medicines" element={<ProtectedRoute><MedicineComparisonPage /></ProtectedRoute>} />
               </Routes>
             </Box>
           </BrowserRouter>
