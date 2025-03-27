@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
         enum: ['local', 'google'],
         default: 'local'
     },
+    role: {
+      type: String,
+      enum: ['user', 'chemist'],
+      default: 'user'
+    },
     mobileNumber: {
       type: String,
       required: true,

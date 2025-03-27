@@ -57,7 +57,7 @@ export const findNearbyPharmacies = async (lat, lng, radius = 5000) => {
 export const identifyGenericPharmacy = (pharmacy) => {
   // Keywords that might indicate a generic pharmacy
   const GENERIC_KEYWORDS = [
-    'generic', 'affordable', 'discount', 'low cost', 'budget', 
+    'generic', 'Generic', 'GENERIC', 'affordable', 'discount', 'low cost', 'budget', 
     'cheap', 'inexpensive', 'economical', 'reasonable',
     'wholesale', 'bulk', 'public', 'government', 'subsidized'
   ];

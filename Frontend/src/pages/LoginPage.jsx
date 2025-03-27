@@ -262,7 +262,7 @@ const LoginPage = () => {
         flexDirection: 'column',
         position: 'relative',
         overflow: 'hidden',
-        background: 'white',
+        background: 'linear-gradient(135deg, #006666 0%, #008080 50%, #00a0a0 100%)',
       }}
     >
       <Header />
@@ -273,24 +273,9 @@ const LoginPage = () => {
           alignItems: 'center',
           justifyContent: 'center',
           py: { xs: 4, md: 8 },
-          position: 'relative',
-          backgroundImage: 'url("https://thumbs.dreamstime.com/b/pharmacist-black-woman-medicine-counter-pharmacy-druggist-stands-opposite-shelves-medicines-points-to-drug-flat-78490316.jpg")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'white',
-            opacity: 0.4,
-            zIndex: 1,
-          }
         }}
       >
-        <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 2 }}>
+        <Container maxWidth="sm">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -540,11 +525,9 @@ const LoginPage = () => {
           </motion.div>
         </Container>
       </Box>
-      <Box sx={{ background: 'rgba(255, 255, 255, 0.9)' }}>
-        <Footer />
-      </Box>
+      <Footer />
     </Box>
   );
 };
 
-export default LoginPage;
+export default LoginPage; 

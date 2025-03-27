@@ -12,7 +12,11 @@ import {
   InputAdornment, 
   IconButton, 
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { 
@@ -71,7 +75,8 @@ const SignupPage = () => {
     name: '',
     email: '',
     mobileNumber: '',
-    password: ''
+    password: '',
+    role: 'user'
   });
 
   // Form errors
@@ -172,7 +177,7 @@ const SignupPage = () => {
         flexDirection: 'column',
         position: 'relative',
         overflow: 'hidden',
-        background: 'white',
+        background: 'linear-gradient(135deg, #006666 0%, #008080 50%, #00a0a0 100%)',
       }}
     >
       <Header />
@@ -183,24 +188,9 @@ const SignupPage = () => {
           alignItems: 'center',
           justifyContent: 'center',
           py: { xs: 4, md: 8 },
-          position: 'relative',
-          backgroundImage: 'url("https://thumbs.dreamstime.com/b/pharmacist-black-woman-medicine-counter-pharmacy-druggist-stands-opposite-shelves-medicines-points-to-drug-flat-78490316.jpg")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'white',
-            opacity: 0.4,
-            zIndex: 1,
-          }
         }}
       >
-        <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 2 }}>
+        <Container maxWidth="sm">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -321,6 +311,32 @@ const SignupPage = () => {
                     }}
                   />
                 </Grid>
+
+                <Grid item xs={12}>
+                  <FormControl component="fieldset">
+                    <Typography variant="subtitle1" gutterBottom>
+                      Are you a chemist?
+                    </Typography>
+                    <RadioGroup
+                      row
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      sx={{ gap: 2 }}
+                    >
+                      <FormControlLabel 
+                        value="user" 
+                        control={<Radio color="primary" />} 
+                        label="No, I'm a user" 
+                      />
+                      <FormControlLabel 
+                        value="chemist" 
+                        control={<Radio color="primary" />} 
+                        label="Yes, I'm a chemist" 
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
               </Grid>
 
               <SignupButton
@@ -357,9 +373,7 @@ const SignupPage = () => {
           </motion.div>
         </Container>
       </Box>
-      <Box sx={{ background: 'rgba(255, 255, 255, 0.9)' }}>
-        <Footer />
-      </Box>
+      <Footer />
     </Box>
   );
 };

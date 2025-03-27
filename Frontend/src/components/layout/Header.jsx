@@ -546,12 +546,12 @@ const Header = () => {
                         </ListItemIcon>
                         Dashboard
                       </MenuItem>
-                      {user && !user.isEmailVerified && (
+                      {user && !user.isAccountVerified && (
                         <MenuItem onClick={handleVerifyEmail}>
                           <ListItemIcon>
                             <VerifyEmailIcon fontSize="small" color="warning" />
                           </ListItemIcon>
-                          Verify Email
+                          Verify Account
                         </MenuItem>
                       )}
                       <MenuItem onClick={handleLogout}>

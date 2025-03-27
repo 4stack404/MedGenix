@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 // Create axios instance with credentials
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
   headers: {
@@ -16,11 +16,24 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Ensure token is properly formatted
+      config.headers.Authorization = `Bearer ${token.trim()}`;
     }
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
@@ -40,7 +53,8 @@ export const login = async (credentials) => {
   try {
     const response = await api.post('/auth/login', credentials);
     if (response.data.success && response.data.token) {
-      localStorage.setItem('token', response.data.token);
+      // Ensure token is properly stored
+      localStorage.setItem('token', response.data.token.trim());
     }
     return response.data;
   } catch (error) {
@@ -111,11 +125,26 @@ export const logout = async () => {
 // Check authentication status
 export const checkAuth = async () => {
   try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return { success: false, message: 'No token found' };
+    }
+
     const response = await api.get('/auth/is-authenticated');
-    return response.data;
+    if (response.data.success) {
+      // Update token if a new one is provided
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token.trim());
+      }
+      return response.data;
+    } else {
+      localStorage.removeItem('token');
+      return { success: false, message: 'Authentication failed' };
+    }
   } catch (error) {
+    console.error('Auth check error:', error);
     if (error.response?.status === 401) {
-      localStorage.removeItem('token'); // Clear invalid token
+      localStorage.removeItem('token');
     }
     throw error.response?.data || { success: false, message: 'Network error' };
   }

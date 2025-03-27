@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@google-cloud/translate": "^9.0.1",
+    "@googlemaps/google-maps-services-js": "^3.4.0",
     "@sendgrid/mail": "^8.1.4",
     "axios": "^1.8.4",
     "bcryptjs": "^2.4.3",
