@@ -21,7 +21,8 @@ export const AuthProvider = ({ children }) => {
         if (response.success && response.user) {
           setUser({
             ...response.user,
-            isAccountVerified: response.user.isAccountVerified
+            isAccountVerified: response.user.isAccountVerified,
+            role: response.user.role
           });
         } else {
           localStorage.removeItem('token');
@@ -45,7 +46,8 @@ export const AuthProvider = ({ children }) => {
     }
     setUser({
       ...userData,
-      isAccountVerified: userData.isAccountVerified
+      isAccountVerified: userData.isAccountVerified,
+      role: userData.role
     });
   };
 
