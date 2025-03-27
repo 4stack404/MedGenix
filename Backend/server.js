@@ -7,6 +7,7 @@ import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import prescriptionRouter from './routes/prescriptionRoutes.js';
 import pharmacyRouter from './routes/pharmacyRoutes.js';
+import genericMedicineRouter from './routes/genericMedicineRoutes.js';
 import session from 'express-session';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -70,6 +71,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/prescriptions', prescriptionRouter);
 app.use('/api/pharmacy', pharmacyRouter);
+app.use('/api/generic-medicines', genericMedicineRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
