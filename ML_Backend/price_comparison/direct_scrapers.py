@@ -6,76 +6,39 @@ from typing import Dict, Any, List, Optional
 from bs4 import BeautifulSoup
 import json
 from urllib.parse import quote
-import random
-import time
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# List of User-Agents to rotate through
-USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
-]
+# Common headers to simulate a browser
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Cache-Control': 'max-age=0'
+}
 
-def get_random_headers() -> Dict[str, str]:
-    """Generate random headers to simulate a real browser."""
-    return {
-        'User-Agent': random.choice(USER_AGENTS),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'max-age=0',
-        'TE': 'Trailers',
-        'Pragma': 'no-cache',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'DNT': '1'
-    }
-
-async def fetch_html(url: str, headers: Optional[Dict[str, str]] = None, max_retries: int = 3) -> str:
-    """Fetch HTML content from a URL with retry logic."""
+async def fetch_html(url: str, headers: Optional[Dict[str, str]] = None) -> str:
+    """Fetch HTML content from a URL."""
     if headers is None:
-        headers = get_random_headers()
+        headers = DEFAULT_HEADERS
     
-    for attempt in range(max_retries):
-        try:
-            # Add a random delay between requests
-            await asyncio.sleep(random.uniform(1, 3))
-            
-            # Use cookie_jar=aiohttp.DummyCookieJar() to ignore problematic cookies
-            async with aiohttp.ClientSession(cookie_jar=aiohttp.DummyCookieJar()) as session:
-                async with session.get(url, headers=headers, timeout=30) as response:
-                    if response.status == 200:
-                        return await response.text()
-                    elif response.status == 403:
-                        logger.warning(f"Access forbidden (403) for {url}, attempt {attempt + 1}/{max_retries}")
-                        if attempt < max_retries - 1:
-                            # Wait longer between retries
-                            await asyncio.sleep(random.uniform(2, 5))
-                            # Try with different headers
-                            headers = get_random_headers()
-                            continue
-                    else:
-                        logger.warning(f"Error {response.status} fetching {url}")
-                        if attempt < max_retries - 1:
-                            await asyncio.sleep(random.uniform(1, 3))
-                            continue
-        except Exception as e:
-            logger.error(f"Error fetching {url}: {str(e)}")
-            if attempt < max_retries - 1:
-                await asyncio.sleep(random.uniform(1, 3))
-                continue
-    
-    return ""
+    try:
+        # Use cookie_jar=aiohttp.DummyCookieJar() to ignore problematic cookies
+        async with aiohttp.ClientSession(cookie_jar=aiohttp.DummyCookieJar()) as session:
+            async with session.get(url, headers=headers, timeout=30) as response:
+                if response.status == 200:
+                    return await response.text()
+                else:
+                    logger.warning(f"Error {response.status} fetching {url}")
+                    return ""
+    except Exception as e:
+        logger.error(f"Error fetching {url}: {str(e)}")
+        return ""
 
 def extract_price(text: str) -> float:
     """Extract price from text."""
@@ -105,7 +68,7 @@ async def scrape_1mg(medicine_name: str) -> Optional[Dict[str, Any]]:
         # Try each URL until we get a response
         for url in urls:
             logger.info(f"Trying URL: {url}")
-            html = await fetch_html(url, get_random_headers())
+            html = await fetch_html(url, DEFAULT_HEADERS)
             if html and len(html) > 1000:  # Check if response is substantial
                 used_url = url
                 break
@@ -228,27 +191,24 @@ async def scrape_1mg(medicine_name: str) -> Optional[Dict[str, Any]]:
                         logger.info(f"Found product name: {product_name}")
                         break
             
-            # If no name found with selectors, try finding the longest text that contains the medicine name
+            # If no name found with selectors, try searching in all text
             if not product_name:
-                text_elements = [elem.get_text().strip() for elem in product.find_all(text=True) if elem.strip()]
-                text_elements.sort(key=len, reverse=True)
-                for text in text_elements:
-                    if medicine_name.lower() in text.lower() and len(text) > 5:
-                        product_name = text
-                        logger.info(f"Found product name in text: {product_name}")
-                        break
+                text = product.get_text()
+                # Try to find a reasonable name from the text
+                name_match = re.search(r'([A-Za-z\s]+(?:\d+mg)?(?:\s+Tablet|\s+Capsule|\s+Syrup|\s+Drops|\s+Injection|\s+Solution|\s+Suspension|\s+Strip|\s+Bottle|\s+Box|\s+Pack)?)', text)
+                if name_match:
+                    product_name = name_match.group(1).strip()
+                    logger.info(f"Found product name in text: {product_name}")
             
-            # If we found both price and name, return the result
-            if price and product_name:
+            if product_name and price:
                 return {
-                    'website': '1mg.com',
-                    'price': price,
-                    'url': used_url,
-                    'availability': True,
-                    'product_name': product_name
+                    "website": "1mg.com",
+                    "price": price,
+                    "url": used_url,
+                    "availability": True,
+                    "product_name": product_name
                 }
         
-        logger.error(f"No valid product with both name and price found on 1mg for {medicine_name}")
         return None
         
     except Exception as e:
@@ -261,7 +221,7 @@ async def scrape_pharmeasy(medicine_name: str) -> Optional[Dict[str, Any]]:
         url = f"https://pharmeasy.in/search/all?name={quote(medicine_name)}"
         logger.info(f"Scraping PharmEasy for {medicine_name}")
         
-        html = await fetch_html(url, get_random_headers())
+        html = await fetch_html(url, DEFAULT_HEADERS)
         if not html:
             logger.error(f"No HTML content returned from PharmEasy for {medicine_name}")
             return None
@@ -399,25 +359,17 @@ async def scrape_pharmeasy(medicine_name: str) -> Optional[Dict[str, Any]]:
         return None
 
 async def get_all_prices(medicine_name: str) -> List[Dict[str, Any]]:
-    """Get prices from all pharmacy websites."""
+    """Get prices from all supported websites."""
     logger.info(f"Starting price fetch for {medicine_name}")
     
+    # Create tasks for each scraper
     tasks = [
         scrape_1mg(medicine_name),
         scrape_pharmeasy(medicine_name)
     ]
     
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    # Run all tasks concurrently
+    results = await asyncio.gather(*tasks)
     
-    # Filter out exceptions and None values
-    valid_results = []
-    for i, result in enumerate(results):
-        if isinstance(result, Exception):
-            logger.error(f"Error in task {i}: {str(result)}")
-        elif result is not None:
-            valid_results.append(result)
-    
-    if not valid_results:
-        logger.warning(f"No valid results found for {medicine_name}")
-    
-    return valid_results 
+    # Filter out None results and return valid ones
+    return [r for r in results if r is not None] 
