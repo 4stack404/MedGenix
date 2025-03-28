@@ -28,6 +28,8 @@ import PrescriptionDetailPage from './pages/PrescriptionDetailPage';
 import GenericAlternativesPage from './pages/GenericAlternativesPage';
 import MedicineComparisonPage from './pages/MedicineComparisonPage';
 import ChemistDashboard from './pages/ChemistDashboard';
+import MedicineSearch from './components/MedicineSearch';
+import NotFoundPage from './pages/NotFoundPage';
 import AnimationTestPage from './pages/AnimationTestPage';
 import PrescriptionGuidePage from './pages/PrescriptionGuidePage';
 import AboutUsPage from './pages/AboutUsPage';
@@ -196,7 +198,15 @@ function App() {
               overflowX: 'hidden',
             }}>
               <Routes>
-                {/* Dashboard is rendered without LoadingProvider */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/search" element={<Box sx={{ p: 4 }}><MedicineSearch /></Box>} />
+                <Route path="/chemist-dashboard" element={<ProtectedRoute><ChemistDashboard /></ProtectedRoute>} />
+                <Route path="/signup" element={<SignUpPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/verify-email" element={<ProtectedRoute><EmailVerifyPage /></ProtectedRoute>} />
+                <Route path="/forgot-password" element={<ProtectedRoute><ForgotPasswordPage /></ProtectedRoute>} />
+                <Route path="/otp-verification" element={<ProtectedRoute><OtpVerificationPage /></ProtectedRoute>} />
+                <Route path="/reset-password" element={<ProtectedRoute><ResetPasswordPage /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 
                 {/* All other routes are wrapped in LoadingProvider */}
@@ -300,6 +310,7 @@ function App() {
                     <AboutUsPage />
                   </LoadingProvider>
                 } />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Box>
           </BrowserRouter>

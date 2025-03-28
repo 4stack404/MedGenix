@@ -12,7 +12,7 @@ const HeroSection = () => {
   const navigate = useNavigate();
 
   const handleScanClick = () => {
-    navigate('/upload-prescription');
+    navigate('/file-upload');
   };
 
   const handleHowItWorksClick = () => {
