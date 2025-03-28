@@ -341,7 +341,7 @@ const SignupPage = () => {
                       <FormControlLabel 
                         value="user" 
                         control={<Radio color="primary" />} 
-                        label="No, I'm a user" 
+                        label="No," 
                       />
                       <FormControlLabel 
                         value="chemist" 

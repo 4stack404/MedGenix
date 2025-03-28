@@ -69,7 +69,7 @@ const Header = () => {
 
   // Navigation items with icons
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard' },
+    { name: user?.role === 'chemist' ? 'Dashboard' : 'Dashboard', path: user?.role === 'chemist' ? '/chemist-dashboard' : '/dashboard' },
     { name: 'Scan Prescription', path: '/upload-prescription' },
     { name: 'About Us', path: '/about-us' }
   ];
@@ -126,7 +126,11 @@ const Header = () => {
   };
 
   const handleDashboard = () => {
-    navigate('/dashboard');
+    if (user?.role === 'chemist') {
+      navigate('/chemist-dashboard');
+    } else {
+      navigate('/dashboard');
+    }
     handleUserMenuClose();
   };
 

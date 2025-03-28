@@ -202,55 +202,78 @@ const LoginPage = () => {
     }
   };
 
+  const handlePasswordLogin = async () => {
+    if (!validatePasswordLogin()) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await login({
+        email: formValues.email,
+        password: formValues.password
+      });
+      
+      if (response.success) {
+        loginContext(response.user, response.token);
+        setSuccess('Login successful!');
+        
+        console.log('User role:', response.user.role);
+        
+        // Redirect based on user role
+        if (response.user.role === 'chemist') {
+          navigate('/chemist-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        setError(response.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOTPVerification = async () => {
+    if (!validateOTPLogin()) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await verifyLoginOTP(formValues.contactInfo, formValues.otp);
+      
+      if (response.success) {
+        loginContext(response.user, response.token);
+        setSuccess('Login successful!');
+        
+        // Redirect based on user role
+        if (response.user.role === 'chemist') {
+          navigate('/chemist-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        setError(response.message || 'OTP verification failed');
+      }
+    } catch (err) {
+      setError(err.message || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
-    setSuccess('');
-
     if (tabValue === 0) {
-      // Password login
-      if (!validatePasswordLogin()) return;
-
-      setLoading(true);
-      try {
-        const response = await login({
-          email: formValues.email,
-          password: formValues.password
-        });
-        setSuccess(response.message);
-        // Update auth context with user data
-        loginContext(response.user);
-        // Redirect to dashboard page after successful login
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
-      } catch (err) {
-        setError(err.message || 'Login failed');
-      } finally {
-        setLoading(false);
-      }
+      await handlePasswordLogin();
+    } else if (otpSent) {
+      await handleOTPVerification();
     } else {
-      // OTP login
-      if (!validateOTPLogin()) return;
-
-      setLoading(true);
-      try {
-        const response = await verifyLoginOTP({
-          email: formValues.contactInfo,
-          otp: formValues.otp
-        });
-        setSuccess(response.message);
-        // Update auth context with user data
-        loginContext(response.user);
-        // Redirect to dashboard page after successful login
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
-      } catch (err) {
-        setError(err.message || 'OTP verification failed');
-      } finally {
-        setLoading(false);
-      }
+      await handleSendOTP();
     }
   };
 

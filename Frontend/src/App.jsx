@@ -187,9 +187,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <LanguageProvider>
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <LanguageProvider>
             <Box sx={{ 
               display: 'flex', 
               flexDirection: 'column', 
@@ -313,9 +313,9 @@ function App() {
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Box>
-          </BrowserRouter>
-        </LanguageProvider>
-      </AuthProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
