@@ -173,14 +173,14 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [prescriptions, setPrescriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const api = useApi();
   
   // Add missing state variables
   const [totalSavings, setTotalSavings] = useState(1250);
-  const [totalPrescriptions, setTotalPrescriptions] = useState(0);
-  const [totalMedicines, setTotalMedicines] = useState(0);
   const [savingsData, setSavingsData] = useState([
     { month: 'Jan', savings: 200 },
     { month: 'Feb', savings: 300 },
@@ -197,7 +197,7 @@ const DashboardPage = () => {
   ]);
 
   useEffect(() => {
-    let isMounted = true; // Flag to track if component is mounted
+    let isMounted = true;
     
     const fetchPrescriptions = async () => {
       try {
@@ -218,39 +218,42 @@ const DashboardPage = () => {
         const data = await response.json();
         console.log('Fetched prescriptions:', data);
 
-        // Transform the data to match PrescriptionDetailPage structure
-        const transformedPrescriptions = data.prescriptions.map(prescription => ({
-          _id: prescription._id,
-          imageUrl: prescription.imageUrl,
-          createdAt: prescription.createdAt,
-          result: {
-            medicines: prescription.medicines || [],
-            doctor_name: prescription.doctor_name,
-            hospital_name: prescription.hospital_name,
-            date: prescription.date,
-            patient_details: prescription.patient_details
-          }
-        }));
+        if (isMounted) {
+          // Transform the data to match PrescriptionDetailPage structure
+          const transformedPrescriptions = data.prescriptions.map(prescription => ({
+            _id: prescription._id,
+            imageUrl: prescription.imageUrl,
+            createdAt: prescription.createdAt,
+            result: {
+              medicines: prescription.medicines || [],
+              doctor_name: prescription.doctor_name,
+              hospital_name: prescription.hospital_name,
+              date: prescription.date,
+              patient_details: prescription.patient_details
+            }
+          }));
 
-        setPrescriptions(transformedPrescriptions);
+          setPrescriptions(transformedPrescriptions);
+        }
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
-        // Set empty array on error to prevent map/forEach errors
         if (isMounted) {
+          setError(error.message);
           setPrescriptions([]);
-          setTotalPrescriptions(0);
-          setTotalMedicines(0);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
     };
 
     fetchPrescriptions();
     
-    // Cleanup function to handle unmounting
     return () => {
-      isMounted = false; // Set flag to false when component unmounts
+      isMounted = false;
     };
-  }, [api]);
+  }, []);
 
   const handleScanPrescription = () => {
     navigate('/file-upload');
@@ -258,7 +261,6 @@ const DashboardPage = () => {
 
   const handleViewPrescription = async (prescription) => {
     try {
-      // Store the complete prescription data in sessionStorage
       sessionStorage.setItem(`prescription_${prescription._id}`, JSON.stringify({
         _id: prescription._id,
         imageUrl: prescription.imageUrl,
@@ -272,7 +274,6 @@ const DashboardPage = () => {
         }
       }));
       
-      // Navigate to the prescription detail page
       navigate(`/prescription/${prescription._id}`);
     } catch (error) {
       console.error('Error handling prescription view:', error);
@@ -284,9 +285,9 @@ const DashboardPage = () => {
     setSelectedPrescription(null);
   };
 
-  // Calculate statistics
-  const totalPrescriptions = prescriptions.length;
-  const totalMedicines = prescriptions.reduce((total, prescription) => 
+  // Calculate statistics from the fetched data
+  const prescriptionCount = prescriptions.length;
+  const medicineCount = prescriptions.reduce((total, prescription) => 
     total + (prescription.result?.medicines?.length || 0), 0
   );
 
@@ -476,7 +477,7 @@ const DashboardPage = () => {
                     </StyledIconAvatar>
                     <Box sx={{ ml: 2 }}>
                       <Typography variant="h4" sx={{ fontWeight: 700, color: '#008080' }}>
-                        {totalPrescriptions}
+                        {prescriptionCount}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Total Prescriptions
@@ -500,7 +501,7 @@ const DashboardPage = () => {
                     </StyledIconAvatar>
                     <Box sx={{ ml: 2 }}>
                       <Typography variant="h4" sx={{ fontWeight: 700, color: '#008080' }}>
-                        {totalMedicines}
+                        {medicineCount}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Total Medicines
