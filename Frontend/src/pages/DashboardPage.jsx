@@ -36,15 +36,15 @@ import {
   Add,
   InfoOutlined,
 } from '@mui/icons-material';
-import axios from 'axios';
 import { formatDate } from '../utils/dateUtils';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import { GlobalStyle } from '../styles/GlobalStyle';
 
 // Additional styles for medicine card flip effect
 import { createGlobalStyle } from 'styled-components';
 
-const GlobalStyle = createGlobalStyle`
+const MedicineCardGlobalStyle = createGlobalStyle`
   .medicine-flip-card {
     height: 250px;
     perspective: 1000px;
@@ -84,8 +84,8 @@ const StyledPaper = styled(Paper)(() => ({
   },
 }));
 
-const StyledStatCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2.5),
+const StyledStatCard = styled(Paper)(() => ({
+  padding: '20px',
   borderRadius: '12px',
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
   backdropFilter: 'blur(8px)',
@@ -109,22 +109,21 @@ const StyledAvatar = styled(Avatar)(() => ({
   border: '2px solid #008080',
 }));
 
-const StyledIconAvatar = styled(Avatar)(({ theme }) => ({
+const StyledIconAvatar = styled(Avatar)(() => ({
   backgroundColor: 'rgba(0, 128, 128, 0.1)',
-  color: theme.palette.primary.main,
-  width: 50,
-  height: 50,
-  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.08)',
+  color: '#008080',
+  width: 48,
+  height: 48,
 }));
 
-const VisibilityIconButton = styled(IconButton)(({ theme }) => ({
+const VisibilityIconButton = styled(IconButton)(() => ({
   backgroundColor: 'rgba(0, 128, 128, 0.1)',
   '&:hover': {
     backgroundColor: 'rgba(0, 128, 128, 0.2)',
   },
 }));
 
-const MedicineCard = styled(Paper)(({ theme }) => ({
+const MedicineCard = styled(Paper)(() => ({
   padding: 0,
   borderRadius: '12px',
   boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
@@ -139,7 +138,7 @@ const MedicineCard = styled(Paper)(({ theme }) => ({
   }
 }));
 
-const MedicineCardSide = styled(Box)(({ theme, isBack }) => ({
+const MedicineCardSide = styled(Box)(({ isBack }) => ({
   position: 'absolute',
   width: '100%',
   height: '100%',
@@ -147,7 +146,7 @@ const MedicineCardSide = styled(Box)(({ theme, isBack }) => ({
   transform: isBack ? 'rotateY(180deg)' : 'rotateY(0deg)',
   display: 'flex',
   flexDirection: 'column',
-  padding: theme.spacing(2),
+  padding: '16px',
   left: 0,
   top: 0,
   right: 0,
@@ -181,11 +180,38 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchPrescriptions = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/prescriptions/user`, {
-          headers: { Authorization: `Bearer ${token}` }
+        setLoading(true);
+        const response = await fetch('http://localhost:8000/api/prescriptions', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
-        setPrescriptions(response.data);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch prescriptions');
+        }
+
+        const data = await response.json();
+        console.log('Fetched prescriptions:', data);
+
+        // Transform the data to match PrescriptionDetailPage structure
+        const transformedPrescriptions = data.prescriptions.map(prescription => ({
+          _id: prescription._id,
+          imageUrl: prescription.imageUrl,
+          createdAt: prescription.createdAt,
+          result: {
+            medicines: prescription.medicines || [],
+            doctor_name: prescription.doctor_name,
+            hospital_name: prescription.hospital_name,
+            date: prescription.date,
+            patient_details: prescription.patient_details
+          }
+        }));
+
+        setPrescriptions(transformedPrescriptions);
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
       } finally {
@@ -197,18 +223,42 @@ const DashboardPage = () => {
   }, []);
 
   const handleScanPrescription = () => {
-    navigate('/upload-prescription');
+    navigate('/file-upload');
   };
 
-  const handleViewPrescription = (prescription) => {
-    setSelectedPrescription(prescription);
-    setDialogOpen(true);
+  const handleViewPrescription = async (prescription) => {
+    try {
+      // Store the complete prescription data in sessionStorage
+      sessionStorage.setItem(`prescription_${prescription._id}`, JSON.stringify({
+        _id: prescription._id,
+        imageUrl: prescription.imageUrl,
+        createdAt: prescription.createdAt,
+        result: {
+          medicines: prescription.result.medicines || [],
+          doctor_name: prescription.result.doctor_name,
+          hospital_name: prescription.result.hospital_name,
+          date: prescription.result.date,
+          patient_details: prescription.result.patient_details
+        }
+      }));
+      
+      // Navigate to the prescription detail page
+      navigate(`/prescription/${prescription._id}`);
+    } catch (error) {
+      console.error('Error handling prescription view:', error);
+    }
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setSelectedPrescription(null);
   };
+
+  // Calculate statistics
+  const totalPrescriptions = prescriptions.length;
+  const totalMedicines = prescriptions.reduce((total, prescription) => 
+    total + (prescription.result?.medicines?.length || 0), 0
+  );
 
   return (
     <Box
@@ -222,6 +272,7 @@ const DashboardPage = () => {
       }}
     >
       <GlobalStyle />
+      <MedicineCardGlobalStyle />
       <Header />
       <Box
         component="main"
@@ -297,27 +348,6 @@ const DashboardPage = () => {
                   >
                     Welcome to your MedGenix dashboard. Track your prescriptions, savings, and manage your healthcare needs all in one place.
                   </Typography>
-                  
-                  <Box 
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      mt: { xs: 2, md: 'auto' },
-                    }}
-                    component={motion.div}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
-                  >
-                    <ActionButton
-                      variant="contained"
-                      color="primary"
-                      startIcon={<Add />}
-                      onClick={handleScanPrescription}
-                    >
-                      Scan New Prescription
-                    </ActionButton>
-                  </Box>
                 </Box>
               </Grid>
               <Grid item xs={12} md={5}>
@@ -370,24 +400,7 @@ const DashboardPage = () => {
                       <Typography variant="body2" color="text.secondary">
                         {user?.email}
                       </Typography>
-                      <Chip 
-                        size="small" 
-                        label="Premium Member" 
-                        sx={{ 
-                          mt: 0.5, 
-                          bgcolor: 'rgba(0, 128, 128, 0.1)', 
-                          color: 'primary.main',
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                        }} 
-                      />
                     </Box>
-                    <IconButton 
-                      sx={{ ml: 'auto' }}
-                      aria-label="Edit profile"
-                    >
-                      <Edit fontSize="small" />
-                    </IconButton>
                   </Box>
                   
                   <Divider sx={{ mb: 2 }} />
@@ -400,25 +413,98 @@ const DashboardPage = () => {
                       zIndex: 1,
                     }}
                   >
-                    <Button
-                      variant="outlined"
-                      color="primary"
+                    <ActionButton
+                      variant="contained"
                       fullWidth
-                      startIcon={<Edit />}
-                      sx={{ 
-                        mt: 2,
-                        '&:hover': {
-                          bgcolor: 'rgba(0, 128, 128, 0.08)'
-                        }
+                      onClick={handleScanPrescription}
+                      sx={{
+                        bgcolor: '#008080',
+                        '&:hover': { bgcolor: '#006666' }
                       }}
+                      startIcon={<Add />}
                     >
-                      Edit Profile
-                    </Button>
+                      Scan New Prescription
+                    </ActionButton>
                   </Box>
                 </StyledPaper>
               </Grid>
             </Grid>
           </motion.div>
+          
+          {/* Statistics Section */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={4}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <StyledStatCard>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <StyledIconAvatar>
+                      <MedicalServices />
+                    </StyledIconAvatar>
+                    <Box sx={{ ml: 2 }}>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: '#008080' }}>
+                        {totalPrescriptions}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Prescriptions
+                      </Typography>
+                    </Box>
+                  </Box>
+                </StyledStatCard>
+              </motion.div>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={4}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <StyledStatCard>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <StyledIconAvatar>
+                      <Medication />
+                    </StyledIconAvatar>
+                    <Box sx={{ ml: 2 }}>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: '#008080' }}>
+                        {totalMedicines}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Medicines
+                      </Typography>
+                    </Box>
+                  </Box>
+                </StyledStatCard>
+              </motion.div>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <StyledStatCard>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <StyledIconAvatar>
+                      <CalendarMonth />
+                    </StyledIconAvatar>
+                    <Box sx={{ ml: 2 }}>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: '#008080' }}>
+                        {new Date().toLocaleDateString()}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Today's Date
+                      </Typography>
+                    </Box>
+                  </Box>
+                </StyledStatCard>
+              </motion.div>
+            </Grid>
+          </Grid>
           
           {/* Prescription History Section */}
           <motion.div
@@ -506,13 +592,18 @@ const DashboardPage = () => {
                               <Typography variant="body2" fontWeight={500}>
                                 {formatDate(prescription.createdAt)}
                               </Typography>
+                              {prescription.result?.doctor_name && (
+                                <Typography variant="caption" color="text.secondary">
+                                  Dr. {prescription.result.doctor_name}
+                                </Typography>
+                              )}
                             </Box>
                           </TableCell>
                           <TableCell align="center">
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Chip 
                                 icon={<Medication fontSize="small" />}
-                                label={`${prescription.medicines?.length || 0} Medicines`}
+                                label={`${prescription.result?.medicines?.length || 0} Medicines`}
                                 variant="outlined"
                                 size="small"
                                 sx={{ 

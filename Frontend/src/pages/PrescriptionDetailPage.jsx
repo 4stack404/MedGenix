@@ -238,26 +238,28 @@ const PrescriptionDetailPage = () => {
   }, [chatMessages]);
   
   useEffect(() => {
-    // In a real application, we would fetch this data from an API
-    // For now, we'll get it from sessionStorage
-    try {
-      const data = JSON.parse(sessionStorage.getItem('prescriptionData'));
-      if (data && data.id === id) {
-        // Verify that the imageUrl is a valid base64 string
-        if (data.imageUrl && data.imageUrl.startsWith('data:image/')) {
-          setPrescriptionData(data);
-        } else {
-          setError('Invalid prescription image data');
+    const loadPrescriptionData = () => {
+      try {
+        setLoading(true);
+        // Get data from sessionStorage using the prescription ID
+        const storedData = sessionStorage.getItem(`prescription_${id}`);
+        
+        if (!storedData) {
+          throw new Error('Invalid prescription image data');
         }
-      } else {
-        setError('Prescription not found');
+        
+        const parsedData = JSON.parse(storedData);
+        setPrescriptionData(parsedData);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading prescription data:', err);
+        setError('Invalid prescription image data');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError('Error loading prescription data');
-      console.error('Error parsing prescription data:', err);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    loadPrescriptionData();
   }, [id]);
   
   const handleMedicineClick = (medicine) => {
@@ -785,8 +787,79 @@ const PrescriptionDetailPage = () => {
             ))}
           </Grid>
         )}
+
+        {/* Add Save Changes button at the bottom of medicines list */}
+        {!generatingAlternatives && displayedMedicines.length > 0 && (
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={savePrescriptionChanges}
+              disabled={isSavingPrescription}
+              startIcon={isSavingPrescription ? <CircularProgress size={20} /> : <CheckCircleOutlineIcon />}
+              sx={{
+                py: 1.5,
+                px: 4,
+                borderRadius: 2,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                '&:hover': {
+                  boxShadow: '0 6px 16px rgba(0, 0, 0, 0.2)',
+                },
+                animation: `${pulsateAnimation} 2s infinite ease-in-out`
+              }}
+            >
+              {isSavingPrescription ? 'Saving Changes...' : 'Save Prescription'}
+            </Button>
+          </Box>
+        )}
       </Paper>
     );
+  };
+  
+  const [isSavingPrescription, setIsSavingPrescription] = useState(false);
+
+  // Function to save all prescription changes to the database
+  const savePrescriptionChanges = async () => {
+    try {
+      setIsSavingPrescription(true);
+      
+      // Get the current prescription data
+      if (!prescriptionData?.id) {
+        throw new Error('No prescription ID found');
+      }
+
+      // Get the updated medicines data
+      const updatedMedicines = prescriptionData.result.medicines.map(medicine => ({
+        brand_name: medicine.brand_name,
+        dosage: medicine.dosage || '',
+        frequency: medicine.frequency || '',
+        duration: medicine.duration || ''
+      }));
+
+      // Update the prescription in the backend
+      const response = await fetch(`http://localhost:8000/api/prescriptions/${prescriptionData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ medicines: updatedMedicines })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update prescription');
+      }
+
+      // Show success message
+      showNotification('Prescription updated successfully');
+    } catch (error) {
+      console.error('Error updating prescription:', error);
+      showNotification('Failed to update prescription. Please try again.', 'error');
+    } finally {
+      setIsSavingPrescription(false);
+    }
   };
   
   if (loading) {

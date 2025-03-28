@@ -182,9 +182,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <LanguageProvider>
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <LanguageProvider>
             <Box sx={{ 
               display: 'flex', 
               flexDirection: 'column', 
@@ -213,9 +213,9 @@ function App() {
                 <Route path="/compare-medicines" element={<ProtectedRoute><MedicineComparisonPage /></ProtectedRoute>} />
               </Routes>
             </Box>
-          </BrowserRouter>
-        </LanguageProvider>
-      </AuthProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
