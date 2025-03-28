@@ -145,6 +145,18 @@ export const verifyLoginOTP = async (req, res) => {
     user.loginOtpExpireAt = undefined;
     await user.save();
 
+    // Set user ID in session
+    req.session.userId = user._id;
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Error saving session" 
+        });
+      }
+    });
+
     // Generate JWT token
     const token = jwt.sign(
       { id: user._id }, 
@@ -168,6 +180,7 @@ export const verifyLoginOTP = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         isAccountVerified: user.isAccountVerified
       },
       token
@@ -333,6 +346,7 @@ export const verifyEmail = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         isAccountVerified: true
       },
       token
@@ -374,6 +388,7 @@ export const isAuthenticated = async (req, res) => {
         id: req.user._id,
         name: req.user.name,
         email: req.user.email,
+        role: req.user.role,
         isAccountVerified: req.user.isAccountVerified
       },
       token
@@ -582,6 +597,18 @@ export const login = async (req, res) => {
       });
     }
 
+    // Set user ID in session
+    req.session.userId = user._id;
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Error saving session" 
+        });
+      }
+    });
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -600,6 +627,7 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         isAccountVerified: user.isAccountVerified
       },
       token

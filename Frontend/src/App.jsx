@@ -13,6 +13,7 @@ import OtpVerificationPage from './pages/OtpVerificationPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { LoadingProvider } from './context/LoadingContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import EmailVerifyPage from './pages/EmailVerifyPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -27,7 +28,11 @@ import PrescriptionDetailPage from './pages/PrescriptionDetailPage';
 import GenericAlternativesPage from './pages/GenericAlternativesPage';
 import MedicineComparisonPage from './pages/MedicineComparisonPage';
 import ChemistDashboard from './pages/ChemistDashboard';
-
+import MedicineSearch from './components/MedicineSearch';
+import NotFoundPage from './pages/NotFoundPage';
+import AnimationTestPage from './pages/AnimationTestPage';
+import PrescriptionGuidePage from './pages/PrescriptionGuidePage';
+import AboutUsPage from './pages/AboutUsPage';
 // Create a theme with teal as the primary color
 const theme = createTheme({
   palette: {
@@ -182,9 +187,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <LanguageProvider>
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <LanguageProvider>
             <Box sx={{ 
               display: 'flex', 
               flexDirection: 'column', 
@@ -194,6 +199,7 @@ function App() {
             }}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/search" element={<Box sx={{ p: 4 }}><MedicineSearch /></Box>} />
                 <Route path="/chemist-dashboard" element={<ProtectedRoute><ChemistDashboard /></ProtectedRoute>} />
                 <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/login" element={<LoginPage />} />
@@ -202,20 +208,114 @@ function App() {
                 <Route path="/otp-verification" element={<ProtectedRoute><OtpVerificationPage /></ProtectedRoute>} />
                 <Route path="/reset-password" element={<ProtectedRoute><ResetPasswordPage /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                <Route path="/medicine/:id" element={<ProtectedRoute><MedicineDetailPage /></ProtectedRoute>} />
-                <Route path="/generic/medicine/:id" element={<ProtectedRoute><GenericMedicineDetailPage /></ProtectedRoute>} />
-                <Route path="/pharmacy-locate" element={<ProtectedRoute><PharmacyLocatePage /></ProtectedRoute>} />
-                <Route path="/how-it-works" element={<HowItWorksPage />} />
-                <Route path="/faq" element={<FAQPage />} />
-                <Route path="/file-upload" element={<ProtectedRoute><PrescriptionUploadPage /></ProtectedRoute>} />
-                <Route path="/prescription/:id" element={<ProtectedRoute><PrescriptionDetailPage /></ProtectedRoute>} />
-                <Route path="/generic-alternatives" element={<ProtectedRoute><GenericAlternativesPage /></ProtectedRoute>} />
-                <Route path="/compare-medicines" element={<ProtectedRoute><MedicineComparisonPage /></ProtectedRoute>} />
+                
+                {/* All other routes are wrapped in LoadingProvider */}
+                <Route path="/" element={
+                  <LoadingProvider>
+                    <HomePage />
+                  </LoadingProvider>
+                } />
+                <Route path="/chemist-dashboard" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><ChemistDashboard /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/signup" element={
+                  <LoadingProvider>
+                    <SignUpPage />
+                  </LoadingProvider>
+                } />
+                <Route path="/login" element={
+                  <LoadingProvider>
+                    <LoginPage />
+                  </LoadingProvider>
+                } />
+                <Route path="/verify-email" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><EmailVerifyPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/forgot-password" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><ForgotPasswordPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/otp-verification" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><OtpVerificationPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/reset-password" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><ResetPasswordPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/medicine/:id" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><MedicineDetailPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/generic/medicine/:id" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><GenericMedicineDetailPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/pharmacy-locate" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><PharmacyLocatePage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/how-it-works" element={
+                  <LoadingProvider>
+                    <HowItWorksPage />
+                  </LoadingProvider>
+                } />
+                <Route path="/faq" element={
+                  <LoadingProvider>
+                    <FAQPage />
+                  </LoadingProvider>
+                } />
+                <Route path="/file-upload" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><PrescriptionUploadPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/prescription/:id" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><PrescriptionDetailPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/generic-alternatives" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><GenericAlternativesPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/compare-medicines" element={
+                  <LoadingProvider>
+                    <ProtectedRoute><MedicineComparisonPage /></ProtectedRoute>
+                  </LoadingProvider>
+                } />
+                <Route path="/test-animation" element={
+                  <LoadingProvider>
+                    <AnimationTestPage />
+                  </LoadingProvider>
+                } />
+                <Route path="/prescription-guide" element={
+                  <LoadingProvider>
+                    <PrescriptionGuidePage />
+                  </LoadingProvider>
+                } />
+                <Route path="/about-us" element={
+                  <LoadingProvider>
+                    <AboutUsPage />
+                  </LoadingProvider>
+                } />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Box>
-          </BrowserRouter>
-        </LanguageProvider>
-      </AuthProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }

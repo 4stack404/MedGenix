@@ -192,11 +192,22 @@ const PrescriptionUploadPage = () => {
       const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
+        credentials: 'include', // Include cookies for session
+        headers: {
+          'Accept': 'application/json',
+        }
       });
       
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Upload error response:', errorData);
+        
+        // If unauthorized, redirect to login
+        if (response.status === 401) {
+          navigate('/login');
+          return;
+        }
+        
         throw new Error(
           `Error ${errorData.status || response.status}: ${errorData.message || errorData.error || 'Unknown error'}`
         );
@@ -209,27 +220,24 @@ const PrescriptionUploadPage = () => {
       setPrescriptionResult(data);
       setUploadStatus('Prescription processed successfully');
       
-      // Generate a simple ID for the prescription (in a real app, this would come from the backend)
-      const prescriptionId = Date.now().toString();
+      // Use the prescriptionId from the backend
+      const prescriptionId = data.prescriptionId;
       
       // Save the data to sessionStorage for use on the results page
-      // Convert blob URL to base64 for storage
-      const imageElement = document.querySelector('img[alt="Prescription preview"]');
-      if (imageElement) {
-        const canvas = document.createElement('canvas');
-        canvas.width = imageElement.naturalWidth;
-        canvas.height = imageElement.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(imageElement, 0, 0);
-        const base64Image = canvas.toDataURL('image/jpeg');
-        
-        sessionStorage.setItem('prescriptionData', JSON.stringify({
-          id: prescriptionId,
-          imageUrl: base64Image,
-          diagnosis: diagnosis.trim() || null,
-          result: data
-        }));
-      }
+      const prescriptionData = {
+        id: prescriptionId,
+        imageUrl: data.cloudinaryUrl,
+        diagnosis: diagnosis.trim() || '',
+        result: {
+          medicines: data.medicines || [],
+          original_text: data.original_text || ''
+        },
+        createdAt: new Date().toISOString(),
+        status: 'active'
+      };
+      
+      // Store in sessionStorage
+      sessionStorage.setItem(`prescription_${prescriptionId}`, JSON.stringify(prescriptionData));
       
       // Redirect to the prescription details page
       navigate(`/prescription/${prescriptionId}`);

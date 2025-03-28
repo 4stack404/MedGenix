@@ -51,9 +51,12 @@ export const register = async (userData) => {
 // Login with email and password
 export const login = async (credentials) => {
   try {
-    const response = await api.post('/auth/login', credentials);
+    const response = await api.post('/auth/login', {
+      email: credentials.email,
+      password: credentials.password
+    });
+    
     if (response.data.success && response.data.token) {
-      // Ensure token is properly stored
       localStorage.setItem('token', response.data.token.trim());
     }
     return response.data;

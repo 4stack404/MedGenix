@@ -202,55 +202,78 @@ const LoginPage = () => {
     }
   };
 
+  const handlePasswordLogin = async () => {
+    if (!validatePasswordLogin()) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await login({
+        email: formValues.email,
+        password: formValues.password
+      });
+      
+      if (response.success) {
+        loginContext(response.user, response.token);
+        setSuccess('Login successful!');
+        
+        console.log('User role:', response.user.role);
+        
+        // Redirect based on user role
+        if (response.user.role === 'chemist') {
+          navigate('/chemist-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        setError(response.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOTPVerification = async () => {
+    if (!validateOTPLogin()) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await verifyLoginOTP(formValues.contactInfo, formValues.otp);
+      
+      if (response.success) {
+        loginContext(response.user, response.token);
+        setSuccess('Login successful!');
+        
+        // Redirect based on user role
+        if (response.user.role === 'chemist') {
+          navigate('/chemist-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        setError(response.message || 'OTP verification failed');
+      }
+    } catch (err) {
+      setError(err.message || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
-    setSuccess('');
-
     if (tabValue === 0) {
-      // Password login
-      if (!validatePasswordLogin()) return;
-
-      setLoading(true);
-      try {
-        const response = await login({
-          email: formValues.email,
-          password: formValues.password
-        });
-        setSuccess(response.message);
-        // Update auth context with user data
-        loginContext(response.user);
-        // Redirect to dashboard page after successful login
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
-      } catch (err) {
-        setError(err.message || 'Login failed');
-      } finally {
-        setLoading(false);
-      }
+      await handlePasswordLogin();
+    } else if (otpSent) {
+      await handleOTPVerification();
     } else {
-      // OTP login
-      if (!validateOTPLogin()) return;
-
-      setLoading(true);
-      try {
-        const response = await verifyLoginOTP({
-          email: formValues.contactInfo,
-          otp: formValues.otp
-        });
-        setSuccess(response.message);
-        // Update auth context with user data
-        loginContext(response.user);
-        // Redirect to dashboard page after successful login
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
-      } catch (err) {
-        setError(err.message || 'OTP verification failed');
-      } finally {
-        setLoading(false);
-      }
+      await handleSendOTP();
     }
   };
 
@@ -262,7 +285,7 @@ const LoginPage = () => {
         flexDirection: 'column',
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #006666 0%, #008080 50%, #00a0a0 100%)',
+        background: '#f7fdfd',
       }}
     >
       <Header />
@@ -273,9 +296,23 @@ const LoginPage = () => {
           alignItems: 'center',
           justifyContent: 'center',
           py: { xs: 4, md: 8 },
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: 'url(/images/pharmacist.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.2,
+            zIndex: 0,
+          }
         }}
       >
-        <Container maxWidth="sm">
+        <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

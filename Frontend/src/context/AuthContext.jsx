@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       localStorage.setItem('token', token);
     }
+    console.log('Setting user data:', userData);
     setUser({
       ...userData,
       isAccountVerified: userData.isAccountVerified,
@@ -66,12 +67,23 @@ export const AuthProvider = ({ children }) => {
     return !!user && !!localStorage.getItem('token');
   };
 
+  const isChemist = () => {
+    return user?.role === 'chemist';
+  };
+
   if (loading) {
     return <LoadingScreen />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      loading, 
+      isAuthenticated,
+      isChemist
+    }}>
       {children}
     </AuthContext.Provider>
   );

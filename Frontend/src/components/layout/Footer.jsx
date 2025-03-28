@@ -29,6 +29,15 @@ const Footer = () => {
 
   const footerLinks = [
     {
+      title: 'Company',
+      links: [
+        { name: 'About Us', url: '/about-us' },
+        { name: 'Contact Us', url: '/contact' },
+        { name: 'Careers', url: '/careers' },
+        { name: 'Blog', url: '/blog' }
+      ]
+    },
+    {
       title: 'Quick Links',
       links: [
         { name: 'Home', url: '/' },
@@ -42,12 +51,12 @@ const Footer = () => {
     {
       title: 'Resources',
       links: [
+        { name: 'Prescription Guide', url: '/prescription-guide' },
         { name: 'Pharmacy Locator', url: '#' },
         { name: 'Partnership Opportunities', url: '#' },
         { name: 'Search Medications', url: '#' },
         { name: 'Dashboard', url: '#' },
         { name: 'Medication Database', url: '#' },
-        { name: 'Health Resources', url: '#' },
       ],
     },
     {

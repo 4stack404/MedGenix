@@ -83,11 +83,13 @@ const GenericAlternativesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+      setAlternatives([]);
+
       // Filter out empty medicine names and create search data
       const validMedicines = medicines.filter(med => med.name.trim());
       if (validMedicines.length === 0) {
         setError('Please enter at least one medicine name');
+        setLoading(false);
         return;
       }
 
@@ -105,46 +107,10 @@ const GenericAlternativesPage = () => {
         searchData
       );
       setAlternatives(response.data);
-
-      // Extract first generic name from each medicine's alternatives
-      const genericNames = response.data
-        .map(medicine => {
-          const firstAlternative = medicine.generic_alternatives[0];
-          if (firstAlternative && firstAlternative.generic_name) {
-            console.log('Found generic name:', firstAlternative.generic_name);
-            return firstAlternative.generic_name;
-          }
-          return null;
-        })
-        .filter(name => name);
-
-      // If we have any generic names, update the stats using local backend
-      if (genericNames.length > 0) {
-        console.log('Sending generic names to backend:', genericNames);
-        try {
-          const statsResponse = await axios.post(
-            'http://localhost:8000/api/generic-medicines/update-stats',
-            { genericNames },
-            {
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          console.log('Generic medicine stats updated successfully:', statsResponse.data);
-        } catch (statsError) {
-          console.error('Error updating generic medicine stats:', statsError);
-          if (statsError.response) {
-            console.error('Error response:', statsError.response.data);
-          }
-        }
-      } else {
-        console.log('No generic names found in the response');
-      }
+      setLoading(false);
     } catch (err) {
       console.error('Error fetching alternatives:', err);
       setError('Failed to fetch generic alternatives. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -326,7 +292,9 @@ const GenericAlternativesPage = () => {
           )}
         </motion.div>
       </Container>
-      <Footer />
+      <Box sx={{ position: 'relative', zIndex: 1, backgroundColor: 'white' }}>
+        <Footer />
+      </Box>
     </Box>
   );
 };

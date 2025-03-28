@@ -186,6 +186,7 @@ const MedicineComparisonPage = () => {
   const [originalMedicines, setOriginalMedicines] = useState([]);
   const [comparisonResults, setComparisonResults] = useState([]);
   const [error, setError] = useState(null);
+  const [prescriptionImage, setPrescriptionImage] = useState(null);
 
   // Helper function to format prices as ranges
   const formatPriceRange = (price) => {
@@ -218,9 +219,14 @@ const MedicineComparisonPage = () => {
           return;
         }
 
-        // Get the prescription image from prescriptionData in sessionStorage
+        // Get the prescription data from sessionStorage
         const prescriptionData = JSON.parse(sessionStorage.getItem('prescriptionData') || '{}');
         console.log('Prescription Data:', prescriptionData);
+
+        // Store prescription data in state for image display
+        if (prescriptionData && prescriptionData.imageUrl) {
+          setPrescriptionImage(prescriptionData.imageUrl);
+        }
 
         const medicines = JSON.parse(medicinesData);
         setOriginalMedicines(medicines);
@@ -232,6 +238,44 @@ const MedicineComparisonPage = () => {
         );
 
         setComparisonResults(response.data);
+
+        // Extract generic names from the alternatives
+        const genericNames = response.data
+          .map(medicine => {
+            const firstAlternative = medicine.generic_alternatives[0];
+            if (firstAlternative && firstAlternative.generic_name) {
+              console.log('Found generic name:', firstAlternative.generic_name);
+              return firstAlternative.generic_name;
+            }
+            return null;
+          })
+          .filter(name => name);
+
+        // If we have any generic names, update the stats using local backend
+        if (genericNames.length > 0) {
+          console.log('Sending generic names to backend:', genericNames);
+          try {
+            const statsResponse = await axios.post(
+              'http://localhost:8000/api/medicines/update-stats',
+              { genericNames },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+              }
+            );
+            console.log('Generic medicine stats updated successfully:', statsResponse.data);
+          } catch (statsError) {
+            console.error('Error updating generic medicine stats:', statsError);
+            if (statsError.response) {
+              console.error('Error response:', statsError.response.data);
+            }
+          }
+        } else {
+          console.log('No generic names found in the response');
+        }
+
         setLoading(false);
       } catch (err) {
         console.error('Error fetching generic alternatives:', err);
@@ -247,6 +291,7 @@ const MedicineComparisonPage = () => {
   }, []);
 
   const handleGoBack = () => {
+    // Simply navigate back without saving
     navigate(-1);
   };
 
@@ -309,14 +354,15 @@ const MedicineComparisonPage = () => {
       >
         <Container maxWidth="xl">
           <Box sx={{ mb: 6, position: 'relative', zIndex: 5 }}>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={handleGoBack}
-              sx={{ mb: 3 }}
-            >
-              Back to Prescription
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={handleGoBack}
+              >
+                Back to Prescription
+              </Button>
+            </Box>
             
             <Box sx={{ textAlign: 'center' }}>
               <Typography
@@ -418,51 +464,39 @@ const MedicineComparisonPage = () => {
                       backgroundColor: 'rgba(0, 0, 0, 0.02)'
                     }}
                   >
-                    {(() => {
-                      // Get the actual prescription image from sessionStorage
-                      const prescriptionData = JSON.parse(sessionStorage.getItem('prescriptionData') || '{}');
-                      const imageUrl = prescriptionData?.imageUrl;
-                      
-                      if (imageUrl && imageUrl.startsWith('data:image/')) {
-                        // Display the actual prescription image
-                        return (
-                          <img 
-                            src={imageUrl} 
-                            alt="Prescription" 
-                            style={{ 
-                              width: '100%', 
-                              height: 'auto', 
-                              display: 'block',
-                              maxHeight: '400px',
-                              objectFit: 'contain',
-                              borderRadius: 8
-                            }}
-                            onError={(e) => {
-                              console.error('Image failed to load');
-                              e.target.onerror = null;
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        );
-                      } else {
-                        // Fallback to a nice placeholder
-                        return (
-                          <Box sx={{ 
-                            width: '100%', 
-                            padding: 3, 
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <MedicalServicesIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-                            <Typography variant="body1" sx={{ textAlign: 'center', color: 'text.secondary' }}>
-                              Prescription image not available
-                            </Typography>
-                          </Box>
-                        );
-                      }
-                    })()}
+                    {prescriptionImage ? (
+                      <img 
+                        src={prescriptionImage} 
+                        alt="Prescription" 
+                        style={{ 
+                          width: '100%', 
+                          height: 'auto', 
+                          display: 'block',
+                          maxHeight: '400px',
+                          objectFit: 'contain',
+                          borderRadius: 8
+                        }}
+                        onError={(e) => {
+                          console.error('Image failed to load');
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <Box sx={{ 
+                        width: '100%', 
+                        padding: 3, 
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <MedicalServicesIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
+                        <Typography variant="body1" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                          Prescription image not available
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                   
                   <Divider sx={{ my: 2 }} />

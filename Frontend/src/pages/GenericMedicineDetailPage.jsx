@@ -25,7 +25,8 @@ import {
   TableRow,
   IconButton,
   Tooltip,
-  Link
+  Link,
+  CircularProgress
 } from '@mui/material';
 import {
   ExpandMore,
@@ -43,14 +44,17 @@ import {
   QuestionAnswer,
   MedicalInformation,
   Compare,
-  RocketLaunch
+  RocketLaunch,
+  Home
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import { styled } from '@mui/material/styles';
+import { getGenericMedicineById } from '../services/medicineService';
+import { getMedicineDosages } from '../services/groqService';
 
-// Sample medicine data (would come from an API in a real app)
+// Sample medicine data as fallback
 const genericMedicineData = {
   id: 2,
   name: 'Atorvastatin',
@@ -232,6 +236,9 @@ const GenericMedicineDetailPage = () => {
   const [error, setError] = useState(null);
   const [activeFaq, setActiveFaq] = useState(null);
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
+  const [selectedDosage, setSelectedDosage] = useState(null);
+  const [dosages, setDosages] = useState([]);
+  const [loadingDosages, setLoadingDosages] = useState(false);
   const mapRef = useRef(null);
 
   // Animations
@@ -250,27 +257,118 @@ const GenericMedicineDetailPage = () => {
     }
   };
 
+  // For debugging
+  useEffect(() => {
+    console.log('Active FAQ state changed:', activeFaq);
+  }, [activeFaq]);
+
   // Fetch medicine data
   useEffect(() => {
     const fetchMedicine = async () => {
       try {
-        // In a real app, this would be an API call
         setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setError(null);
         
-        // For demo purposes, we're using sample data
-        setMedicine(genericMedicineData);
+        // Use the API service to fetch medicine data
+        const medicineData = await getGenericMedicineById(id);
+        console.log('Fetched generic medicine data:', medicineData);
+        
+        if (!medicineData) {
+          throw new Error('No data received from API');
+        }
+        
+        // Extract content details - new format handling
+        const contentDetails = medicineData.content_details || {};
+        const contentDoctors = Object.keys(contentDetails);
+        const author = contentDoctors.length > 0 ? contentDoctors[0] : 'Medical Professional';
+        const authorImage = contentDoctors.length > 0 ? contentDetails[author] : null;
+        const reviewer = contentDoctors.length > 1 ? contentDoctors[1] : 'Medical Professional';
+        const reviewerImage = contentDoctors.length > 1 ? contentDetails[reviewer] : null;
+        
+        // Map the API response to the expected format
+        const formattedData = {
+          id: id,
+          name: medicineData.medicine_name || id,
+          brand: 'Generic',
+          category: medicineData.category || 'Medication',
+          usageInfo: medicineData.uses || [], // Keep as array instead of joining
+          howItWorks: medicineData.how_it_works || 'Information not available',
+          activeIngredients: medicineData.active_ingredients || 'Information not available',
+          sideEffects: [
+            {
+              severity: 'Common',
+              effects: medicineData.common_side_effects || []
+            },
+            {
+              severity: 'Less Common',
+              effects: medicineData.less_common_side_effects || []
+            },
+            {
+              severity: 'Rare',
+              effects: medicineData.rare_side_effects || []
+            }
+          ],
+          doctorVerified: {
+            name: author,
+            specialty: '',
+            date: '',
+            image: authorImage
+          },
+          brandId: 1,
+          price: medicineData.price || 0,
+          priceComparison: [], // API doesn't provide this info
+          expertAdvice: {
+            doctor: reviewer,
+            qualification: '',
+            advice: medicineData.expert_advice || [], // Keep as array
+            date: '',
+            image: reviewerImage
+          },
+          faqs: medicineData.faqs?.map(faq => ({
+            question: faq.question,
+            answer: faq.answer
+          })) || [],
+          dosageOptions: medicineData.dosage_options || []
+        };
+        
+        setMedicine(formattedData);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching medicine details:', err);
-        setError('Failed to load medicine details. Please try again.');
+        setError('Failed to load medicine details');
         setLoading(false);
       }
     };
 
     fetchMedicine();
   }, [id]);
+
+  // Add this new useEffect for fetching dosages
+  useEffect(() => {
+    const fetchDosages = async () => {
+      if (medicine?.name) {
+        setLoadingDosages(true);
+        try {
+          const availableDosages = await getMedicineDosages(medicine.name);
+          setDosages(availableDosages);
+        } catch (error) {
+          console.error('Error fetching dosages:', error);
+          // Set default dosages if API call fails
+          setDosages([
+            { strength: '1mg' },
+            { strength: '2mg' },
+            { strength: '5mg' },
+            { strength: '10mg' },
+            { strength: '50mg' }
+          ]);
+        } finally {
+          setLoadingDosages(false);
+        }
+      }
+    };
+
+    fetchDosages();
+  }, [medicine?.name]);
 
   // Navigate to branded medicine page
   const handleNavigateToBranded = () => {
@@ -281,7 +379,7 @@ const GenericMedicineDetailPage = () => {
 
   // Find lowest price
   const getLowestPrice = () => {
-    if (!medicine?.priceComparison?.length) return null;
+    if (!medicine?.priceComparison || !medicine.priceComparison.length) return null;
     return medicine.priceComparison.reduce((lowest, current) => 
       current.price < lowest.price ? current : lowest, 
       medicine.priceComparison[0]
@@ -310,7 +408,76 @@ const GenericMedicineDetailPage = () => {
     );
   }
 
-  if (error || !medicine) {
+  if (error) {
+    return (
+      <>
+        <Header />
+        <Container maxWidth="md" sx={{ py: 8 }}>
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center',
+              borderRadius: 2,
+              bgcolor: 'background.paper'
+            }}
+          >
+            <Box sx={{ mb: 3 }}>
+              <MedicalInformation 
+                sx={{ 
+                  fontSize: 60, 
+                  color: 'primary.main',
+                  mb: 2
+                }} 
+              />
+            </Box>
+            <Typography 
+              variant="h5" 
+              component="h1" 
+              gutterBottom 
+              sx={{ 
+                fontWeight: 600,
+                color: 'primary.main',
+                mb: 2
+              }}
+            >
+              Information Not Available
+            </Typography>
+            <Typography 
+              variant="body1" 
+              color="text.secondary" 
+              sx={{ 
+                maxWidth: 600,
+                mx: 'auto',
+                mb: 3
+              }}
+            >
+              Sorry, currently we do not have information related to this medicine in our database. 
+              We are constantly expanding our database to provide you with comprehensive information 
+              about medicines.
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate('/')}
+              startIcon={<Home />}
+              sx={{ 
+                mt: 2,
+                px: 4,
+                py: 1.5,
+                borderRadius: 2
+              }}
+            >
+              Return to Home
+            </Button>
+          </Paper>
+        </Container>
+        <Footer />
+      </>
+    );
+  }
+
+  if (!medicine) {
     return (
       <>
         <Header />
@@ -425,7 +592,15 @@ const GenericMedicineDetailPage = () => {
                     <SectionTitle variant="h5">
                       <MedicalInformation /> Uses
                     </SectionTitle>
-                    <Typography paragraph>{medicine.usageInfo}</Typography>
+                    <Box>
+                      {medicine.usageInfo && medicine.usageInfo.length > 0 
+                        ? medicine.usageInfo.map((use, index) => (
+                            <Typography key={index} component="div" sx={{ mb: 1 }}>
+                              • {use}
+                            </Typography>
+                          ))
+                        : 'Information not available'}
+                    </Box>
                     <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>How it works</Typography>
                     <Typography paragraph>{medicine.howItWorks}</Typography>
                   </StyledPaper>
@@ -444,18 +619,19 @@ const GenericMedicineDetailPage = () => {
                       gap: 2,
                       mb: 3
                     }}>
-                      {[...medicine.sideEffects[0].effects, ...medicine.sideEffects[1].effects, ...medicine.sideEffects[2].effects].map((effect, index) => (
+                      {medicine.sideEffects && medicine.sideEffects.map(sideEffect => 
+                        sideEffect.effects && sideEffect.effects.map((effect, index) => (
                         <Box 
-                          key={index} 
+                            key={`${sideEffect.severity}-${index}`} 
                           sx={{ 
                             p: 2, 
                             borderRadius: 2, 
-                            bgcolor: index < 4 ? 'rgba(103, 194, 124, 0.08)' : 
-                                    index < 8 ? 'rgba(0, 128, 128, 0.12)' : 
+                              bgcolor: sideEffect.severity === 'Common' ? 'rgba(103, 194, 124, 0.08)' : 
+                                      sideEffect.severity === 'Less Common' ? 'rgba(0, 128, 128, 0.12)' : 
                                     'rgba(0, 128, 128, 0.16)',
                             border: '1px solid',
-                            borderColor: index < 4 ? 'rgba(103, 194, 124, 0.3)' : 
-                                        index < 8 ? 'rgba(0, 128, 128, 0.3)' : 
+                              borderColor: sideEffect.severity === 'Common' ? 'rgba(103, 194, 124, 0.3)' : 
+                                          sideEffect.severity === 'Less Common' ? 'rgba(0, 128, 128, 0.3)' : 
                                         'rgba(0, 128, 128, 0.4)',
                             display: 'flex',
                             alignItems: 'center',
@@ -473,8 +649,8 @@ const GenericMedicineDetailPage = () => {
                               height: 8, 
                               borderRadius: '50%', 
                               mr: 1.5,
-                              bgcolor: index < 4 ? '#67c27c' : 
-                                      index < 8 ? '#008080' : 
+                                bgcolor: sideEffect.severity === 'Common' ? '#67c27c' : 
+                                        sideEffect.severity === 'Less Common' ? '#008080' : 
                                       '#005f5f'
                             }} 
                           />
@@ -482,7 +658,8 @@ const GenericMedicineDetailPage = () => {
                             {effect}
                           </Typography>
                         </Box>
-                      ))}
+                        ))
+                      )}
                     </Box>
                     
                     <Box sx={{ 
@@ -503,7 +680,7 @@ const GenericMedicineDetailPage = () => {
                 <motion.div variants={fadeInUp}>
                   <StyledPaper sx={{ mt: 4 }}>
                     <SectionTitle variant="h5">
-                      <MedicalServices /> Expert Advice
+                      <MedicalServices /> Content Details
                     </SectionTitle>
                     
                     <Box sx={{ 
@@ -520,76 +697,53 @@ const GenericMedicineDetailPage = () => {
                           height: 70,
                           mr: 2
                         }}
+                        src={medicine.doctorVerified.image}
+                        alt={medicine.doctorVerified.name}
                       >
-                        AS
+                        {!medicine.doctorVerified.image && medicine.doctorVerified.name.split(' ').map(word => word.charAt(0))}
                       </Avatar>
                       <Box>
                         <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                          Dr. Anuj Saini
+                          {medicine.doctorVerified.name}
                         </Typography>
+                        {medicine.doctorVerified.specialty && (
                         <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                          MMST, MBBS
+                            {medicine.doctorVerified.specialty}
                         </Typography>
+                        )}
                         <Typography variant="body2" color="primary.main">
-                          Expert Opinion
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
-                          CONTENT DETAILS
+                          Author
                         </Typography>
                       </Box>
                     </Box>
                     
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                      Expert advice for the medicine
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: 'secondary.main', 
+                          width: 60, 
+                          height: 60,
+                          mr: 2
+                        }}
+                        src={medicine.expertAdvice.image}
+                        alt={medicine.expertAdvice.doctor}
+                      >
+                        {!medicine.expertAdvice.image && medicine.expertAdvice.doctor.split(' ').map(word => word.charAt(0))}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          {medicine.expertAdvice.doctor}
                     </Typography>
-                    
-                    <Typography paragraph>
-                      In general, Atorvastatin is safe. It may cause diarrhea, gas or an upset stomach. If any of these happen to you, take it with food.
+                        {medicine.expertAdvice.qualification && (
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            {medicine.expertAdvice.qualification}
                     </Typography>
-                    
-                    <Typography paragraph>
-                      Inform your doctor if you experience fatigue, muscle weakness or muscle pain.
+                        )}
+                        <Typography variant="body2" color="secondary.main">
+                          Reviewer
                     </Typography>
-                    
-                    <Typography paragraph>
-                      Your doctor may check your liver function before starting the treatment and regularly thereafter. Inform your doctor if you notice signs of liver problems such as stomach pains, unusually dark urine or yellowing of skin or eyes.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      Inform your doctor if you have kidney disease, liver disease or diabetes before starting treatment with this medicine. If you are diabetic, monitor your blood sugar level regularly as Atorvastatin may cause an increase in your blood sugar level.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      Do not take Atorvastatin if you are pregnant, planning a pregnancy or breastfeeding.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      Atorvastatin treats high cholesterol by lowering "bad" cholesterol (LDL) and triglycerides (fats). It should be taken in addition to regular exercise and low-fat diet.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      It also reduces the risk of heart attack and stroke.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      In general, Atorvastatin is safe. It may cause diarrhea, gas or an upset stomach. If any of these happen to you, take it with food.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      Inform your doctor if you experience fatigue, muscle weakness or muscle pain.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      Your doctor may check your liver function before starting the treatment and regularly thereafter. Inform your doctor if you notice signs of liver problems such as stomach pains, unusually dark urine or yellowing of skin or eyes.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      Inform your doctor if you have kidney disease, liver disease or diabetes before starting treatment with this medicine. If you are diabetic, monitor your blood sugar level regularly as Atorvastatin may cause an increase in your blood sugar level.
-                    </Typography>
-                    
-                    <Typography paragraph>
-                      Do not take Atorvastatin if you are pregnant, planning a pregnancy or breastfeeding.
-                    </Typography>
+                      </Box>
+                    </Box>
                   </StyledPaper>
                 </motion.div>
               </motion.div>
@@ -633,9 +787,10 @@ const GenericMedicineDetailPage = () => {
                     )}
                     
                     <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-                      Generic {medicine.name} ({medicine.category}) Price Comparison
+                      Generic {medicine.name} ({medicine.category || 'Medication'}) Price Comparison
                     </Typography>
                     
+                    {medicine.priceComparison && medicine.priceComparison.length > 0 ? (
                     <Grid container spacing={2}>
                       {medicine.priceComparison.map((platform, index) => (
                         <Grid item xs={12} key={index}>
@@ -705,11 +860,81 @@ const GenericMedicineDetailPage = () => {
                         </Grid>
                       ))}
                     </Grid>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 3, bgcolor: 'background.paper', borderRadius: 2 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          Price comparison data is not available for this medication.
+                        </Typography>
+                      </Box>
+                    )}
                     
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
                       <InfoOutlined sx={{ fontSize: '1rem', mr: 0.5, verticalAlign: 'middle' }} />
                       Prices and availability may vary. Last updated: Today
                     </Typography>
+                  </StyledPaper>
+                </motion.div>
+
+                {/* Dosage Options Section */}
+                <motion.div variants={fadeInUp}>
+                  <StyledPaper sx={{ mt: 4 }}>
+                    <SectionTitle variant="h5">
+                      <MedicalServices /> Available Dosages
+                    </SectionTitle>
+                    
+                    {loadingDosages ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                        <CircularProgress size={24} />
+                      </Box>
+                    ) : (
+                      <Grid container spacing={2} sx={{ mt: 2 }}>
+                        {dosages.map((dosage, index) => (
+                          <Grid item xs={6} sm={4} key={index}>
+                            <Paper
+                              elevation={selectedDosage?.strength === dosage.strength ? 3 : 1}
+                              sx={{
+                                p: 2,
+                                cursor: 'pointer',
+                                border: selectedDosage?.strength === dosage.strength ? '2px solid' : 'none',
+                                borderColor: 'primary.main',
+                                bgcolor: selectedDosage?.strength === dosage.strength ? 'white' : 'background.paper',
+                                transition: 'all 0.3s ease',
+                                aspectRatio: '1',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textAlign: 'center',
+                                '&:hover': {
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: 3,
+                                  bgcolor: 'primary.light',
+                                }
+                              }}
+                              onClick={() => setSelectedDosage(dosage)}
+                            >
+                              <Typography 
+                                variant="h6" 
+                                sx={{ 
+                                  fontWeight: 600,
+                                  color: selectedDosage?.strength === dosage.strength ? 'primary.main' : 'text.primary'
+                                }}
+                              >
+                                {dosage.strength}
+                              </Typography>
+                              {selectedDosage?.strength === dosage.strength && (
+                                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', color: 'primary.main' }}>
+                                  <CheckCircleOutline sx={{ fontSize: 16, mr: 0.5 }} />
+                                  <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                                    Selected
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Paper>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    )}
                   </StyledPaper>
                 </motion.div>
 
@@ -721,274 +946,98 @@ const GenericMedicineDetailPage = () => {
                     </SectionTitle>
                     
                     <Typography variant="subtitle1" sx={{ mb: 3 }}>
-                      Important information about Atorvastatin that patients commonly ask about
+                      Important information about {medicine.name} that patients commonly ask about
                     </Typography>
                     
-                    {/* Existing FAQs */}
-                    <Accordion 
-                      expanded={activeFaq === 0}
-                      onChange={() => setActiveFaq(activeFaq === 0 ? null : 0)}
+                    {medicine.faqs && medicine.faqs.length > 0 ? (
+                      medicine.faqs.map((faq, index) => (
+                        <Box 
+                          key={index}
                       sx={{ 
                         mb: 2, 
-                        boxShadow: 'none', 
                         border: '1px solid rgba(0, 0, 0, 0.12)',
                         borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Is generic atorvastatin as effective as the brand-name version?
+                            bgcolor: 'white'
+                          }}
+                        >
+                          <Box
+                            onClick={() => setActiveFaq(activeFaq === index ? null : index)}
+                      sx={{ 
+                              padding: '16px',
+                              cursor: 'pointer',
+                              backgroundColor: activeFaq === index ? 'rgba(0, 128, 128, 0.08)' : 'white',
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              justifyContent: 'space-between',
+                              transition: 'background-color 0.3s ease',
+                        borderRadius: '8px',
+                              '&:hover': {
+                                backgroundColor: 'rgba(0, 128, 128, 0.05)'
+                              }
+                            }}
+                          >
+                            <Typography 
+                      sx={{ 
+                                fontWeight: 600,
+                                flex: 1,
+                                pr: 2
+                              }}
+                            >
+                              {faq.question}
                         </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Yes, generic atorvastatin contains the same active ingredient and is required by law to be as safe and effective as the brand-name version. The FDA ensures that generic medications provide the same clinical benefits.
+                            <ExpandMore 
+                      sx={{ 
+                                transform: activeFaq === index ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.3s ease',
+                                flexShrink: 0
+                              }}
+                            />
+                          </Box>
+                          
+                          {activeFaq === index && (
+                            <Box
+                      sx={{ 
+                                padding: '0 16px 16px 16px',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <Typography sx={{ 
+                                whiteSpace: 'pre-wrap',
+                                color: 'text.primary',
+                                lineHeight: 1.6
+                              }}>
+                                {faq.answer}
                         </Typography>
-                      </AccordionDetails>
-                    </Accordion>
+                            </Box>
+                          )}
+                        </Box>
+                      ))
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 3, bgcolor: 'background.paper', borderRadius: 2 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          No FAQs available for this medication.
+                        </Typography>
+                      </Box>
+                    )}
+                  </StyledPaper>
+                </motion.div>
+
+                {/* Add new Expert Advice section on the right column below FAQs */}
+                <motion.div variants={fadeInUp}>
+                  <StyledPaper sx={{ mt: 4 }}>
+                    <SectionTitle variant="h5">
+                      <MedicalServices /> Expert Advice
+                    </SectionTitle>
                     
-                    <Accordion 
-                      expanded={activeFaq === 1}
-                      onChange={() => setActiveFaq(activeFaq === 1 ? null : 1)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Can I switch between brand and generic versions?
+                    <Box>
+                      {medicine.expertAdvice.advice && medicine.expertAdvice.advice.length > 0 
+                        ? medicine.expertAdvice.advice.map((advice, index) => (
+                            <Typography key={index} component="div" sx={{ mb: 1.5 }}>
+                              • {advice}
                         </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Yes, you can switch between brand and generic versions of atorvastatin. However, it's recommended to consult with your healthcare provider before making any changes to your medication.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 2}
-                      onChange={() => setActiveFaq(activeFaq === 2 ? null : 2)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Are there any differences in side effects between generic and brand?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Generic and brand-name atorvastatin share the same potential side effects. Any differences are typically related to inactive ingredients, which rarely cause issues for most patients.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 3}
-                      onChange={() => setActiveFaq(activeFaq === 3 ? null : 3)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Why is generic atorvastatin less expensive?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Generic medications are less expensive because manufacturers don't have to repeat costly clinical trials that the brand-name manufacturers conducted. Additionally, competition among multiple generic manufacturers helps lower the price.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    {/* Additional FAQs */}
-                    <Accordion 
-                      expanded={activeFaq === 4}
-                      onChange={() => setActiveFaq(activeFaq === 4 ? null : 4)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          When should I take Atorvastatin – morning or evening?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Atorvastatin is usually taken once a day in the evening or at bedtime. This is because the body makes more cholesterol at night than during the day. Taking it in the evening ensures it works most effectively.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 5}
-                      onChange={() => setActiveFaq(activeFaq === 5 ? null : 5)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Can I drink alcohol while taking Atorvastatin?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Drinking alcohol while taking Atorvastatin can increase the risk of liver damage. It's recommended to limit alcohol consumption and discuss this with your doctor if you regularly drink alcohol.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 6}
-                      onChange={() => setActiveFaq(activeFaq === 6 ? null : 6)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          How long does it take for Atorvastatin to start working?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Atorvastatin starts working within 1-2 weeks, but the full effect on cholesterol levels may take up to 4-6 weeks. Regular blood tests will help your doctor monitor how well it's working for you.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 7}
-                      onChange={() => setActiveFaq(activeFaq === 7 ? null : 7)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          What foods should I avoid while taking Atorvastatin?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Avoid grapefruit and grapefruit juice as they can increase the concentration of Atorvastatin in your blood, potentially increasing side effects. Also limit foods high in cholesterol and saturated fats, like fatty meats, full-fat dairy products, and fried foods.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 8}
-                      onChange={() => setActiveFaq(activeFaq === 8 ? null : 8)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          What should I do if I miss a dose?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          If you miss a dose, take it as soon as you remember unless it's almost time for your next dose. In that case, skip the missed dose and continue with your regular schedule. Do not take a double dose to make up for a missed one.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 9}
-                      onChange={() => setActiveFaq(activeFaq === 9 ? null : 9)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Do I need to follow a special diet while taking Atorvastatin?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          Yes, Atorvastatin works best when combined with a heart-healthy diet. This includes reducing saturated fats, trans fats, and cholesterol in your diet. Focus on fruits, vegetables, whole grains, lean proteins, and healthy fats like those found in olive oil and nuts.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
-                    
-                    <Accordion 
-                      expanded={activeFaq === 10}
-                      onChange={() => setActiveFaq(activeFaq === 10 ? null : 10)}
-                      sx={{ 
-                        mb: 2, 
-                        boxShadow: 'none', 
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
-                        borderRadius: '8px',
-                        '&:before': { display: 'none' },
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Can I stop taking Atorvastatin once my cholesterol levels are normal?
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography paragraph>
-                          No, you should not stop taking Atorvastatin without consulting your doctor, even if your cholesterol levels return to normal. Atorvastatin helps maintain healthy cholesterol levels, and discontinuing it could cause your cholesterol to rise again.
-                        </Typography>
-                      </AccordionDetails>
-                    </Accordion>
+                          ))
+                        : 'No expert advice available for this medication.'}
+                    </Box>
                   </StyledPaper>
                 </motion.div>
               </motion.div>

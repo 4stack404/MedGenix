@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Logo for MedGenix with a medical/pharmacy theme -->
+  <!-- Main circle background -->
+  <circle cx="100" cy="100" r="90" fill="#008080" opacity="0.1" />
+  
+  <!-- Medical cross -->
+  <path d="M70 70 L130 70 L130 130 L70 130 Z" fill="none" stroke="#008080" stroke-width="8" stroke-linejoin="round" />
+  <rect x="90" y="60" width="20" height="80" fill="#67c27c" rx="5" />
+  <rect x="60" y="90" width="80" height="20" fill="#67c27c" rx="5" />
+  
+  <!-- Pill shape -->
+  <ellipse cx="100" cy="100" rx="60" ry="40" fill="none" stroke="#008080" stroke-width="5" stroke-dasharray="10,5" transform="rotate(45,100,100)" />
+  
+  <!-- Letter M stylized -->
+  <path d="M85 120 L85 85 L93 100 L100 85 L107 100 L115 85 L115 120" fill="none" stroke="#008080" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+</svg> 

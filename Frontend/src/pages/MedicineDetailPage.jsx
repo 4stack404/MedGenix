@@ -39,6 +39,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import { styled } from '@mui/material/styles';
+import { getBrandedMedicineById } from '../services/medicineService';
 
 // Sample medicine data (would come from an API in a real app)
 const medicineData = {
@@ -212,19 +213,65 @@ const MedicineDetailPage = () => {
   useEffect(() => {
     const fetchMedicine = async () => {
       try {
-        // In a real app, this would be an API call
         setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // For demo purposes, we're using sample data
-        setMedicine(medicineData);
-        setSelectedDosage(medicineData.dosageOptions[0]);
+        // Use the API service to fetch medicine data
+        const medicineData = await getBrandedMedicineById(id);
+        console.log('Fetched branded medicine data:', medicineData);
+        
+        // Map the API response to the expected format for branded medicines
+        const formattedData = {
+          id: id,
+          name: medicineData.medicine_name || id,
+          brand: medicineData.manufacturer || 'Brand',
+          category: medicineData.category || 'Medication',
+          usageInfo: medicineData.uses?.join('. ') || 'Information not available',
+          howItWorks: medicineData.how_it_works || 'Information not available',
+          activeIngredients: medicineData.active_ingredients || 'Information not available',
+          dosageOptions: [
+            {
+              strength: '10mg',
+              price: medicineData.price || 100,
+              quantity: '30 tablets'
+            },
+            {
+              strength: '20mg',
+              price: (medicineData.price || 100) * 1.5,
+              quantity: '30 tablets'
+            }
+          ],
+          sideEffects: {
+            common: medicineData.common_side_effects || [],
+            serious: medicineData.serious_side_effects || []
+          },
+          doctorVerified: {
+            name: 'Medical Professional',
+            specialty: 'Healthcare',
+            date: new Date().toDateString()
+          },
+          genericId: id + '_generic',
+          expertAdvice: medicineData.expert_advice?.join('. ') || 'No specific advice available',
+          faqs: medicineData.faqs?.map(faq => ({
+            question: faq.question,
+            answer: faq.answer
+          })) || []
+        };
+        
+        setMedicine(formattedData);
+        setSelectedDosage(formattedData.dosageOptions[0]);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching medicine details:', err);
         setError('Failed to load medicine details. Please try again.');
         setLoading(false);
+        
+        // Optional: Fallback to sample data in development environment
+        if (import.meta.env.DEV) {
+          console.warn('Using fallback sample data in development mode');
+          setMedicine(medicineData);
+          setSelectedDosage(medicineData.dosageOptions[0]);
+          setError(null);
+        }
       }
     };
 
@@ -408,43 +455,21 @@ const MedicineDetailPage = () => {
                       gap: 2,
                       mb: 3
                     }}>
-                      {[...medicine.sideEffects[0].effects, ...medicine.sideEffects[1].effects, ...medicine.sideEffects[2].effects].map((effect, index) => (
+                      {medicine.sideEffects && Array.isArray(medicine.sideEffects.common) && medicine.sideEffects.common.concat(medicine.sideEffects.serious || []).map((effect, index) => (
                         <Box 
                           key={index} 
-                          sx={{ 
-                            p: 2, 
-                            borderRadius: 2, 
-                            bgcolor: index < 4 ? 'rgba(103, 194, 124, 0.08)' : 
-                                    index < 8 ? 'rgba(0, 128, 128, 0.12)' : 
-                                    'rgba(0, 128, 128, 0.16)',
-                            border: '1px solid',
-                            borderColor: index < 4 ? 'rgba(103, 194, 124, 0.3)' : 
-                                        index < 8 ? 'rgba(0, 128, 128, 0.3)' : 
-                                        'rgba(0, 128, 128, 0.4)',
+                          sx={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                            padding: 1.5,
+                            borderRadius: 2,
+                            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+                            border: '1px solid rgba(0, 0, 0, 0.08)',
                             display: 'flex',
                             alignItems: 'center',
-                            transition: 'transform 0.2s, box-shadow 0.2s',
-                            '&:hover': {
-                              transform: 'translateY(-2px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                            }
                           }}
                         >
-                          <Box 
-                            component="span" 
-                            sx={{ 
-                              width: 8, 
-                              height: 8, 
-                              borderRadius: '50%', 
-                              mr: 1.5,
-                              bgcolor: index < 4 ? '#67c27c' : 
-                                      index < 8 ? '#008080' : 
-                                      '#005f5f'
-                            }} 
-                          />
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {effect}
-                          </Typography>
+                          <ErrorOutline sx={{ color: 'warning.main', mr: 1, fontSize: 20 }} />
+                          <Typography variant="body2">{effect}</Typography>
                         </Box>
                       ))}
                     </Box>
