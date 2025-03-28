@@ -9,6 +9,7 @@ from typing import Optional
 import groq
 from dotenv import load_dotenv
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
@@ -16,6 +17,14 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 firecrawl_api_key = os.getenv("FIRECRAWL_API_KEY")
 
 app = FastAPI(title="Medicine Information API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Add base endpoint
 @app.get("/")
