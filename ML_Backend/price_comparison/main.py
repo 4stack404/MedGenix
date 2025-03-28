@@ -30,7 +30,59 @@ class PriceComparisonResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Medicine Price Comparison API"}
+    return {"message": "Welcome to Medicine Price Comparison API created by one and only goated AB7 OP"}
+
+@app.get("/help")
+async def help():
+    return {
+        "message": "Welcome to Medicine Price Comparison API Help",
+        "endpoints": {
+            "root": {
+                "url": "/",
+                "method": "GET",
+                "description": "Welcome message",
+                "example_response": {
+                    "message": "Welcome to Medicine Price Comparison API created by one and only goated AB7 OP"
+                }
+            },
+            "compare_prices": {
+                "url": "/compare/{medicine_name}",
+                "method": "GET",
+                "description": "Compare medicine prices across different pharmacy websites",
+                "parameters": {
+                    "medicine_name": "Name of the medicine to search for (e.g., 'paracetamol', 'dolo 650')"
+                },
+                "example_request": "/compare/paracetamol",
+                "example_response": {
+                    "medicine_name": "paracetamol",
+                    "prices": [
+                        {
+                            "website": "1mg.com",
+                            "price": 33.76,
+                            "url": "https://www.1mg.com/search/all?name=paracetamol",
+                            "availability": True,
+                            "product_name": "Dolo 650 Tablet"
+                        },
+                        {
+                            "website": "pharmeasy.in",
+                            "price": 22.14,
+                            "url": "https://pharmeasy.in/search/all?name=paracetamol",
+                            "availability": True,
+                            "product_name": "Teplota 100mg Bottle Of 15ml Oral Drops"
+                        }
+                    ],
+                    "timestamp": "2025-03-28T15:18:53.598402"
+                }
+            }
+        },
+        "notes": [
+            "All prices are in Indian Rupees (₹)",
+            "The API searches across 1mg.com and PharmEasy",
+            "Product names include dosage and form information",
+            "Availability status indicates if the product is in stock",
+            "URLs are direct links to the product pages"
+        ]
+    }
 
 @app.get("/compare/{medicine_name}", response_model=PriceComparisonResponse)
 async def compare_prices(medicine_name: str):
