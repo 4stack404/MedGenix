@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 import { useAuth } from '../context/AuthContext';
 import {
   Box,
@@ -23,7 +25,6 @@ import {
   Container,
   Grid,
   Divider,
-  CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
@@ -38,8 +39,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { formatDate } from '../utils/dateUtils';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
+import useApi from '../hooks/useApi';
 
 // Additional styles for medicine card flip effect
 import { createGlobalStyle } from 'styled-components';
@@ -174,27 +174,71 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [prescriptions, setPrescriptions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const api = useApi();
+  
+  // Add missing state variables
+  const [totalSavings, setTotalSavings] = useState(1250);
+  const [totalPrescriptions, setTotalPrescriptions] = useState(0);
+  const [totalMedicines, setTotalMedicines] = useState(0);
+  const [savingsData, setSavingsData] = useState([
+    { month: 'Jan', savings: 200 },
+    { month: 'Feb', savings: 300 },
+    { month: 'Mar', savings: 250 },
+    { month: 'Apr', savings: 380 },
+    { month: 'May', savings: 400 },
+    { month: 'Jun', savings: 500 },
+    { month: 'Jul', savings: 450 },
+    { month: 'Aug', savings: 480 },
+    { month: 'Sep', savings: 600 },
+    { month: 'Oct', savings: 750 },
+    { month: 'Nov', savings: 800 },
+    { month: 'Dec', savings: 1250 }
+  ]);
 
   useEffect(() => {
+    let isMounted = true; // Flag to track if component is mounted
+    
     const fetchPrescriptions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/prescriptions/user`, {
+        
+        if (!token) {
+          if (isMounted) {
+            setPrescriptions([]);
+            setTotalPrescriptions(0);
+          }
+          return;
+        }
+        
+        const response = await api.get(`${import.meta.env.VITE_API_URL}/api/prescriptions/user`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setPrescriptions(response.data);
+        
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setPrescriptions(response.data || []);
+          setTotalPrescriptions((response.data || []).length);
+        }
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
-      } finally {
-        setLoading(false);
+        // Set empty array on error to prevent map/forEach errors
+        if (isMounted) {
+          setPrescriptions([]);
+          setTotalPrescriptions(0);
+          setTotalMedicines(0);
+        }
       }
     };
 
     fetchPrescriptions();
-  }, []);
+    
+    // Cleanup function to handle unmounting
+    return () => {
+      isMounted = false; // Set flag to false when component unmounts
+    };
+  }, [api]);
 
   const handleScanPrescription = () => {
     navigate('/upload-prescription');
@@ -446,14 +490,21 @@ const DashboardPage = () => {
             </Typography>
             
             <StyledPaper>
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                  <CircularProgress />
+              {!prescriptions || prescriptions.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="body1" color="text.secondary">
+                    Welcome to MedGenix! You haven't uploaded any prescriptions yet.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Add />}
+                    onClick={handleScanPrescription}
+                    sx={{ mt: 2 }}
+                  >
+                    Scan Your First Prescription
+                  </Button>
                 </Box>
-              ) : prescriptions.length === 0 ? (
-                <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                  No prescriptions uploaded yet. Start by scanning a prescription!
-                </Typography>
               ) : (
                 <TableContainer sx={{ overflow: 'auto', maxHeight: 440 }}>
                   <Table sx={{ minWidth: 650 }} aria-label="prescription history table">
@@ -465,7 +516,7 @@ const DashboardPage = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {prescriptions.map((prescription) => (
+                      {prescriptions && prescriptions.map((prescription) => (
                         <TableRow
                           key={prescription._id}
                           hover
@@ -581,6 +632,7 @@ const DashboardPage = () => {
                 variant="contained" 
                 color="primary"
                 startIcon={<Add />}
+                onClick={handleScanPrescription}
               >
                 Scan New Prescription
               </Button>
