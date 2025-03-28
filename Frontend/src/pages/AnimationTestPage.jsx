@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Container, 
@@ -14,14 +14,23 @@ import {
   TextField,
   Switch,
   FormControlLabel,
-  IconButton
+  IconButton,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemText,
+  Tooltip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import InfoIcon from '@mui/icons-material/Info';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import LoadingAnimation from '../components/common/LoadingAnimation';
+import { useLoading } from '../context/LoadingContext';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -38,6 +47,19 @@ const AnimationTestPage = () => {
   const [loadingText, setLoadingText] = useState('Loading...');
   const [animationDuration, setAnimationDuration] = useState(5000);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [tipKey, setTipKey] = useState(0);
+  const [recentTips, setRecentTips] = useState([]);
+  
+  // Use the loading context
+  const loadingContext = useLoading();
+  
+  // Get recent tips from sessionStorage on component mount
+  useEffect(() => {
+    const recentTipsJSON = sessionStorage.getItem('recentTips');
+    if (recentTipsJSON) {
+      setRecentTips(JSON.parse(recentTipsJSON));
+    }
+  }, [tipKey]);
   
   const handleToggleLoading = () => {
     setIsLoading(!isLoading);
@@ -45,9 +67,15 @@ const AnimationTestPage = () => {
   
   const simulateLoading = () => {
     setIsLoading(true);
+    setTipKey(prev => prev + 1); // Force a new tip
     setTimeout(() => {
       setIsLoading(false);
     }, animationDuration);
+  };
+
+  const forceNewTip = () => {
+    setTipKey(prev => prev + 1);
+    setIsLoading(true);
   };
 
   const toggleFullScreen = () => {
@@ -81,7 +109,7 @@ const AnimationTestPage = () => {
           <CloseIcon />
         </IconButton>
         {isLoading ? (
-          <LoadingAnimation text={loadingText} />
+          <LoadingAnimation text={loadingText} key={tipKey} />
         ) : (
           <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
             Loading animation is hidden. Return to controls to show it again.
@@ -162,14 +190,13 @@ const AnimationTestPage = () => {
                   </FormControl>
                 </Grid>
                 
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={6}>
                   <Button 
                     variant="contained" 
                     color="primary" 
                     fullWidth
                     onClick={simulateLoading}
                     sx={{ 
-                      mt: 2,
                       py: 1.5,
                       backgroundColor: '#008080',
                       '&:hover': {
@@ -180,7 +207,71 @@ const AnimationTestPage = () => {
                     Simulate Loading Process
                   </Button>
                 </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <Button 
+                    variant="outlined" 
+                    color="primary" 
+                    fullWidth
+                    onClick={forceNewTip}
+                    sx={{ 
+                      py: 1.5,
+                      borderColor: '#008080',
+                      color: '#008080',
+                      '&:hover': {
+                        borderColor: '#67c27c',
+                        backgroundColor: 'rgba(103, 194, 124, 0.08)',
+                      },
+                    }}
+                    startIcon={<RefreshIcon />}
+                  >
+                    Show New Tip
+                  </Button>
+                </Grid>
               </Grid>
+            </StyledPaper>
+            
+            {/* New section for recent tips history */}
+            <StyledPaper>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, flexGrow: 1 }}>
+                  Recent Tips
+                </Typography>
+                <Tooltip title="Shows the 5 most recently displayed tips">
+                  <InfoIcon fontSize="small" color="action" />
+                </Tooltip>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              
+              <List sx={{ bgcolor: 'background.paper' }}>
+                {recentTips.length > 0 ? (
+                  recentTips.map((tip, index) => (
+                    <ListItem key={index} divider={index < recentTips.length - 1}>
+                      <ListItemText 
+                        primary={`${index + 1}. ${tip.substring(0, 50)}${tip.length > 50 ? '...' : ''}`}
+                        secondary={tip}
+                        primaryTypographyProps={{ fontWeight: 500 }}
+                        secondaryTypographyProps={{ 
+                          sx: { 
+                            display: tip.length > 50 ? '-webkit-box' : 'none',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            color: '#006666',
+                            fontSize: '0.85rem',
+                            fontStyle: 'italic',
+                            mt: 0.5
+                          } 
+                        }}
+                      />
+                    </ListItem>
+                  ))
+                ) : (
+                  <ListItem>
+                    <ListItemText primary="No tips shown yet. Use the loading animation to see tips." />
+                  </ListItem>
+                )}
+              </List>
             </StyledPaper>
           </Grid>
           
@@ -226,13 +317,60 @@ const AnimationTestPage = () => {
                 pt: 4
               }}>
                 {isLoading ? (
-                  <LoadingAnimation text={loadingText} />
+                  <LoadingAnimation text={loadingText} key={tipKey} />
                 ) : (
                   <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
                     Loading animation is hidden. Toggle the switch to show it again.
                   </Typography>
                 )}
               </Box>
+            </StyledPaper>
+            
+            {/* New section for explanation of the feature */}
+            <StyledPaper sx={{ mt: 4 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                About Tips & Facts Feature
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Typography variant="body2" paragraph>
+                The loading animation now displays a random tip or fact about MedGenix and 
+                generic medicines with each appearance. This feature:
+              </Typography>
+              
+              <Box component="ul" sx={{ pl: 3 }}>
+                <Box component="li" sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    Educates users while they wait for content to load
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    Showcases MedGenix features and benefits
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    Provides valuable information about generic medicines
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    Automatically rotates through different tips every 7 seconds
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    Uses a memory system to ensure users see varied tips without repetition
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic' }}>
+                There are over 45 different tips and facts in the system, divided into 
+                "Do you know?" facts about MedGenix, general medicine "Tips", and 
+                "Did you know?" facts about generic medicines.
+              </Typography>
             </StyledPaper>
           </Grid>
           
@@ -261,7 +399,7 @@ const AnimationTestPage = () => {
                       Page Loading
                     </Typography>
                     <Box sx={{ my: 2 }}>
-                      <LoadingAnimation text="Loading page..." />
+                      <LoadingAnimation text="Loading page..." key={`page-${tipKey}`} />
                     </Box>
                   </Paper>
                 </Grid>
@@ -283,7 +421,7 @@ const AnimationTestPage = () => {
                       API Request
                     </Typography>
                     <Box sx={{ my: 2 }}>
-                      <LoadingAnimation text="Fetching data..." />
+                      <LoadingAnimation text="Fetching data..." key={`api-${tipKey}`} />
                     </Box>
                   </Paper>
                 </Grid>
@@ -305,7 +443,7 @@ const AnimationTestPage = () => {
                       Prescription Scanning
                     </Typography>
                     <Box sx={{ my: 2 }}>
-                      <LoadingAnimation text="Analyzing prescription..." />
+                      <LoadingAnimation text="Analyzing prescription..." key={`scan-${tipKey}`} />
                     </Box>
                   </Paper>
                 </Grid>

@@ -131,7 +131,7 @@ const ForgotPasswordPage = () => {
         flexDirection: 'column',
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #006666 0%, #008080 50%, #00a0a0 100%)',
+        background: '#f7fdfd',
       }}
     >
       <Header />
@@ -142,9 +142,23 @@ const ForgotPasswordPage = () => {
           alignItems: 'center',
           justifyContent: 'center',
           py: { xs: 4, md: 8 },
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: 'url(/images/pharmacist.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.2,
+            zIndex: 0,
+          }
         }}
       >
-        <Container maxWidth="sm">
+        <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
           <Box
             sx={{
               opacity: 1,

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useRef } from 'react';
 import { Box } from '@mui/material';
 import LoadingAnimation from '../components/common/LoadingAnimation';
 
@@ -12,6 +12,7 @@ const LoadingContext = createContext({
   setLoadingText: () => {},
   disableForPage: () => {},
   enableForPage: () => {},
+  tipKey: 0
 });
 
 // Custom hook to use the loading context
@@ -23,6 +24,8 @@ export const LoadingProvider = ({ children }) => {
   const [loadingText, setLoadingText] = useState('Loading...');
   // Maintain a set of disabled pages
   const [disabledPages, setDisabledPages] = useState(new Set(['dashboard']));
+  // Key to force re-render of LoadingAnimation with a new tip
+  const [tipKey, setTipKey] = useState(0);
 
   // Show the loading animation
   const showLoading = (text, page) => {
@@ -34,6 +37,8 @@ export const LoadingProvider = ({ children }) => {
       return;
     }
     
+    // Increment tip key to show a new tip
+    setTipKey(prevKey => prevKey + 1);
     setIsLoading(true);
   };
 
@@ -50,6 +55,11 @@ export const LoadingProvider = ({ children }) => {
     // Don't show loading if current page is in disabled pages
     if (loading && page && disabledPages.has(page.toLowerCase())) {
       return;
+    }
+    
+    // If turning on loading, increment the tip key for a new tip
+    if (loading) {
+      setTipKey(prevKey => prevKey + 1);
     }
     
     setIsLoading(loading);
@@ -86,6 +96,7 @@ export const LoadingProvider = ({ children }) => {
         setLoadingText,
         disableForPage,
         enableForPage,
+        tipKey
       }}
     >
       {children}
@@ -118,7 +129,7 @@ export const LoadingProvider = ({ children }) => {
             }
           }}
         >
-          <LoadingAnimation text={loadingText} />
+          <LoadingAnimation text={loadingText} key={tipKey} />
         </Box>
       )}
     </LoadingContext.Provider>
