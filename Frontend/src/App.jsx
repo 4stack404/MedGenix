@@ -27,6 +27,8 @@ import PrescriptionDetailPage from './pages/PrescriptionDetailPage';
 import GenericAlternativesPage from './pages/GenericAlternativesPage';
 import MedicineComparisonPage from './pages/MedicineComparisonPage';
 import ChemistDashboard from './pages/ChemistDashboard';
+import MedicineSearch from './components/MedicineSearch';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Create a theme with teal as the primary color
 const theme = createTheme({
@@ -194,6 +196,7 @@ function App() {
             }}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/search" element={<Box sx={{ p: 4 }}><MedicineSearch /></Box>} />
                 <Route path="/chemist-dashboard" element={<ProtectedRoute><ChemistDashboard /></ProtectedRoute>} />
                 <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/login" element={<LoginPage />} />
@@ -211,6 +214,7 @@ function App() {
                 <Route path="/prescription/:id" element={<ProtectedRoute><PrescriptionDetailPage /></ProtectedRoute>} />
                 <Route path="/generic-alternatives" element={<ProtectedRoute><GenericAlternativesPage /></ProtectedRoute>} />
                 <Route path="/compare-medicines" element={<ProtectedRoute><MedicineComparisonPage /></ProtectedRoute>} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Box>
           </BrowserRouter>
