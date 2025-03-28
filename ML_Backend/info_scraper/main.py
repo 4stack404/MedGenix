@@ -125,7 +125,7 @@ def process_with_llm(content: str, medicine_name: str) -> MedicineResponse:
     1. Uses
     2. How it works
     3. Common side effects
-    4. Content details (with each author and their image link, "name": "image_link")
+    4. Content details (with each author and their image link, ("name": "image_link"))
     5. Expert advice
     6. FAQs
     
