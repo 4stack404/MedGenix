@@ -7,6 +7,7 @@ import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import pharmacyRouter from './routes/pharmacyRoutes.js';
 import genericMedicineRouter from './routes/genericMedicineRoutes.js';
+import prescriptionRouter from './routes/prescriptionRoutes.js';
 import session from 'express-session';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -16,6 +17,10 @@ import multer from 'multer';
 import axios from 'axios';
 import FormData from 'form-data';
 import ocrRouter from './routes/ocrRoutes.js';
+import { v2 as cloudinary } from 'cloudinary';
+import userModel from './models/userModels.js';
+import { Readable } from 'stream';
+import medicineRoutes from './routes/medicineRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +36,13 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Connect to MongoDB
 connectDB();
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // CORS Configuration
 app.use(cors({
@@ -51,10 +63,25 @@ app.use(
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/'
+    },
+    name: 'medgenix.sid', // Custom session name
+    rolling: true, // Refresh session on every request
+    unset: 'destroy' // Remove session when browser closes
   })
 );
+
+// Add session debugging middleware
+app.use((req, res, next) => {
+  console.log('Session Debug:', {
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    userId: req.session?.userId,
+    cookie: req.session?.cookie
+  });
+  next();
+});
 
 // Middlewares
 app.use(express.json());
@@ -75,21 +102,8 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Configure multer for file uploads for OCR
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    cb(null, uploadsDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
   limits: {
@@ -113,25 +127,26 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
 });
 
-// File upload endpoint
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  console.log('Upload endpoint hit at:', new Date().toISOString());
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-    res.json({ 
-      message: 'File uploaded successfully',
-      filename: req.file.filename
-    });
-  } catch (error) {
-    console.error('Upload Error:', error);
-    res.status(500).json({ 
-      message: 'Error uploading file',
-      error: error.message 
-    });
-  }
-});
+// Helper function to upload buffer to Cloudinary
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'prescriptions',
+        resource_type: 'auto'
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    const bufferStream = new Readable();
+    bufferStream.push(buffer);
+    bufferStream.push(null);
+    bufferStream.pipe(uploadStream);
+  });
+};
 
 // OCR Processing endpoint
 app.post('/api/process-ocr', upload.single('file'), async (req, res) => {
@@ -140,23 +155,37 @@ app.post('/api/process-ocr', upload.single('file'), async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    console.log('File received:', {
-      filename: req.file.filename,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      path: req.file.path
-    });
+    // Get user ID from session
+    const userId = req.session.userId;
+    console.log('Session data:', req.session);
 
-    // Create form data for the OCR API
+    if (!userId) {
+      return res.status(401).json({ 
+        message: 'User not authenticated',
+        details: 'Please log in to upload prescriptions'
+      });
+    }
+
+    // Verify user exists in database
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'User not found',
+        details: 'User account no longer exists'
+      });
+    }
+
+    // Upload to Cloudinary directly from buffer
+    const cloudinaryResult = await uploadToCloudinary(req.file.buffer);
+
+    // Create form data for OCR API
     const formData = new FormData();
-    formData.append('file', fs.createReadStream(req.file.path), {
+    formData.append('file', req.file.buffer, {
       filename: req.file.originalname,
       contentType: req.file.mimetype
     });
 
-    console.log('Sending request to OCR API:', OCR_API_URL);
-
-    // Send request to OCR API with proper headers
+    // Send request to OCR API
     const response = await axios.post(OCR_API_URL, formData, {
       headers: {
         ...formData.getHeaders(),
@@ -165,87 +194,61 @@ app.post('/api/process-ocr', upload.single('file'), async (req, res) => {
       },
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
-      timeout: 30000, // 30 second timeout
-      maxRedirects: 0, // Don't follow redirects automatically
-      validateStatus: status => status < 500 // Consider all non-5xx responses as success
+      timeout: 30000
     });
 
-    console.log('OCR API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data,
-      headers: response.headers
+    const ocrData = response.data;
+
+    // Extract medicines from OCR data
+    const medicines = (ocrData.medicines || []).map(medicine => ({
+      brand_name: medicine.brand_name || '',
+      dosage: medicine.dosage || '',
+      frequency: medicine.frequency || '',
+      duration: medicine.duration || ''
+    }));
+
+    // Generate a unique prescription ID
+    const prescriptionId = `PRES${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+
+    // Update user's prescriptions in database
+    await userModel.findByIdAndUpdate(
+      userId,
+      {
+        $push: {
+          prescriptions: {
+            prescriptionId: prescriptionId,
+            imageUrl: cloudinaryResult.secure_url,
+            medicines: medicines.map(med => ({
+              brand_name: med.brand_name,
+              dosage: med.dosage,
+              frequency: med.frequency,
+              duration: med.duration
+            })),
+            createdAt: new Date()
+          }
+        }
+      }
+    );
+
+    res.json({
+      ...ocrData,
+      medicines: medicines,
+      cloudinaryUrl: cloudinaryResult.secure_url,
+      prescriptionId: prescriptionId
     });
 
-    // If we get a redirect, follow it manually with a POST request
-    if (response.status === 307 || response.status === 302 || response.status === 301) {
-      const redirectUrl = response.headers.location;
-      console.log('Following redirect to:', redirectUrl);
-      
-      // Create new form data for the redirect
-      const redirectFormData = new FormData();
-      redirectFormData.append('file', fs.createReadStream(req.file.path), {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype
-      });
-      
-      // Make the second request to the redirect location
-      const redirectResponse = await axios.post(redirectUrl, redirectFormData, {
-        headers: {
-          ...redirectFormData.getHeaders(),
-          'Accept': 'application/json',
-          'Content-Type': 'multipart/form-data'
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        timeout: 30000
-      });
-      
-      console.log('Redirect response:', {
-        status: redirectResponse.status,
-        statusText: redirectResponse.statusText,
-        data: redirectResponse.data
-      });
-      
-      // Clean up the uploaded file
-      fs.unlinkSync(req.file.path);
-      
-      return res.json(redirectResponse.data);
-    }
-
-    // Clean up the uploaded file
-    fs.unlinkSync(req.file.path);
-
-    res.json(response.data);
   } catch (error) {
     console.error('OCR Processing Error:', {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
-      headers: error.response?.headers,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      }
+      headers: error.response?.headers
     });
 
-    // Clean up the uploaded file in case of error
-    if (req.file && req.file.path) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting file:', unlinkError);
-      }
-    }
-
-    // Send more detailed error information
     res.status(500).json({ 
       message: 'Error processing OCR',
       error: error.message,
-      details: error.response?.data || 'No additional details available',
-      status: error.response?.status,
-      endpoint: OCR_API_URL
+      details: error.response?.data || 'No additional details available'
     });
   }
 });
@@ -302,11 +305,68 @@ app.post('/api/simulate-ocr', upload.single('file'), (req, res) => {
   }
 });
 
-// Routes
+// Mount routes
 app.use('/api/auth', authRouter);
-app.use('/api/user', userRouter);
-app.use('/api/pharmacy', pharmacyRouter);
+app.use('/api/users', userRouter);
+app.use('/api/pharmacies', pharmacyRouter);
 app.use('/api/generic-medicines', genericMedicineRouter);
+app.use('/api/prescriptions', prescriptionRouter);
+app.use('/api/ocr', ocrRouter);
+app.use('/api/medicines', medicineRoutes);
+
+// Add endpoint to update prescription medicines
+app.put('/api/prescriptions/:prescriptionId', async (req, res) => {
+  try {
+    const { prescriptionId } = req.params;
+    const { medicines } = req.body;
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: 'User not authenticated',
+        details: 'Please log in to update prescriptions'
+      });
+    }
+
+    // Update the prescription in the user's document
+    const result = await userModel.findOneAndUpdate(
+      { 
+        'prescriptions.prescriptionId': prescriptionId,
+        _id: userId 
+      },
+      {
+        $set: {
+          'prescriptions.$.medicines': medicines.map(med => ({
+            brand_name: med.brand_name || '',
+            dosage: med.dosage || '',
+            frequency: med.frequency || '',
+            duration: med.duration || ''
+          }))
+        }
+      },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({
+        message: 'Prescription not found',
+        details: 'Could not find prescription with the given ID'
+      });
+    }
+
+    res.json({
+      message: 'Prescription updated successfully',
+      prescription: result.prescriptions.find(p => p.prescriptionId === prescriptionId)
+    });
+
+  } catch (error) {
+    console.error('Error updating prescription:', error);
+    res.status(500).json({
+      message: 'Error updating prescription',
+      error: error.message
+    });
+  }
+});
 
 // Add this logging middleware to debug OCR routes
 app.use('/api/ocr', (req, res, next) => {
